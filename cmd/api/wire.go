@@ -28,6 +28,10 @@ func initializeServer(dsn string) (*http.ServeMux, error) {
 		catalogSet,
 		cartSet,
 		orderSet,
+		customerSet,
+		inventorySet,
+		shippingSet,
+		couponSet,
 		controllerSet,
 	)
 	return nil, nil

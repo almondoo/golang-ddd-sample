@@ -7,17 +7,17 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/almondoo/golang-ddd-sample/internal/application/catalog/query"
+	catalogusecase "github.com/almondoo/golang-ddd-sample/internal/application/usecase/catalog"
 	"github.com/almondoo/golang-ddd-sample/internal/domain/shared"
 )
 
-// ProductQuery は query.ProductQueryService の GORM 実装である。
+// ProductQuery は catalogusecase.ProductQueryService の GORM 実装である。
 //
-// 型名を ProductQueryService としなかったのは、query パッケージの
-// インターフェース名（query.ProductQueryService）とこの実装の型名が
+// 型名を ProductQueryService としなかったのは、catalogusecase パッケージの
+// インターフェース名（catalogusecase.ProductQueryService）とこの実装の型名が
 // 同名になり紛らわしくなるのを避けるためである。command 側の
 // ProductRepository が「catalog.Repository の実装」であるのと対比して、
-// こちらは「query.ProductQueryService の実装」であることを var _ の
+// こちらは「catalogusecase.ProductQueryService の実装」であることを var _ の
 // アサーションで明示している。
 //
 // catalog.Repository を経由せず gorm.DB へ直接クエリを発行しているのは、
@@ -32,11 +32,11 @@ func NewProductQuery(db *gorm.DB) *ProductQuery {
 	return &ProductQuery{db: db}
 }
 
-// コンパイル時に ProductQuery が query.ProductQueryService を満たすことを保証する。
-var _ query.ProductQueryService = (*ProductQuery)(nil)
+// コンパイル時に ProductQuery が catalogusecase.ProductQueryService を満たすことを保証する。
+var _ catalogusecase.ProductQueryService = (*ProductQuery)(nil)
 
 // List は登録済みの商品を一覧で返す。
-func (q *ProductQuery) List(ctx context.Context) ([]query.ProductDTO, error) {
+func (q *ProductQuery) List(ctx context.Context) ([]catalogusecase.ProductDTO, error) {
 	db := DBFromContext(ctx, q.db)
 
 	var models []ProductModel
@@ -44,7 +44,7 @@ func (q *ProductQuery) List(ctx context.Context) ([]query.ProductDTO, error) {
 		return nil, err
 	}
 
-	dtos := make([]query.ProductDTO, 0, len(models))
+	dtos := make([]catalogusecase.ProductDTO, 0, len(models))
 	for _, m := range models {
 		dtos = append(dtos, toProductDTO(m))
 	}
@@ -52,7 +52,7 @@ func (q *ProductQuery) List(ctx context.Context) ([]query.ProductDTO, error) {
 }
 
 // FindByID は id に対応する商品を返す。
-func (q *ProductQuery) FindByID(ctx context.Context, id string) (*query.ProductDTO, error) {
+func (q *ProductQuery) FindByID(ctx context.Context, id string) (*catalogusecase.ProductDTO, error) {
 	db := DBFromContext(ctx, q.db)
 
 	var model ProductModel
@@ -70,8 +70,8 @@ func (q *ProductQuery) FindByID(ctx context.Context, id string) (*query.ProductD
 // toProductDTO は永続化モデルを問い合わせ用 DTO に変換する。
 // ドメイン集約を経由しないため、ここでの変換はバリデーションを伴わない
 // 単純なフィールドのコピーである。
-func toProductDTO(m ProductModel) query.ProductDTO {
-	return query.ProductDTO{
+func toProductDTO(m ProductModel) catalogusecase.ProductDTO {
+	return catalogusecase.ProductDTO{
 		ID:          m.ID,
 		Name:        m.Name,
 		Description: m.Description,

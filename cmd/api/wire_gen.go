@@ -7,13 +7,13 @@
 package main
 
 import (
-	command2 "github.com/almondoo/golang-ddd-sample/internal/application/cart/command"
-	"github.com/almondoo/golang-ddd-sample/internal/application/cart/eventhandler"
-	query2 "github.com/almondoo/golang-ddd-sample/internal/application/cart/query"
-	"github.com/almondoo/golang-ddd-sample/internal/application/catalog/command"
-	"github.com/almondoo/golang-ddd-sample/internal/application/catalog/query"
-	command3 "github.com/almondoo/golang-ddd-sample/internal/application/order/command"
-	query3 "github.com/almondoo/golang-ddd-sample/internal/application/order/query"
+	"github.com/almondoo/golang-ddd-sample/internal/application/usecase/cart"
+	"github.com/almondoo/golang-ddd-sample/internal/application/usecase/catalog"
+	"github.com/almondoo/golang-ddd-sample/internal/application/usecase/coupon"
+	"github.com/almondoo/golang-ddd-sample/internal/application/usecase/customer"
+	"github.com/almondoo/golang-ddd-sample/internal/application/usecase/inventory"
+	"github.com/almondoo/golang-ddd-sample/internal/application/usecase/order"
+	"github.com/almondoo/golang-ddd-sample/internal/application/usecase/shipping"
 	"github.com/almondoo/golang-ddd-sample/internal/infrastructure/persistence"
 	"github.com/almondoo/golang-ddd-sample/internal/presentation/controller"
 	"net/http"
@@ -41,28 +41,49 @@ func initializeServer(dsn string) (*http.ServeMux, error) {
 	}
 	productRepository := persistence.NewProductRepository(db)
 	txManager := persistence.NewTxManager(db)
-	registerProductUseCase := command.NewRegisterProductUseCase(productRepository, txManager)
-	changePriceUseCase := command.NewChangePriceUseCase(productRepository, txManager)
+	registerProductUseCase := catalog.NewRegisterProductUseCase(productRepository, txManager)
+	changePriceUseCase := catalog.NewChangePriceUseCase(productRepository, txManager)
 	productQuery := persistence.NewProductQuery(db)
-	listProductsUseCase := query.NewListProductsUseCase(productQuery)
-	getProductUseCase := query.NewGetProductUseCase(productQuery)
+	listProductsUseCase := catalog.NewListProductsUseCase(productQuery)
+	getProductUseCase := catalog.NewGetProductUseCase(productQuery)
 	catalogController := controller.NewCatalogController(registerProductUseCase, changePriceUseCase, listProductsUseCase, getProductUseCase)
 	cartRepository := persistence.NewCartRepository(db)
-	addItemUseCase := command2.NewAddItemUseCase(cartRepository, txManager)
-	removeItemUseCase := command2.NewRemoveItemUseCase(cartRepository, txManager)
+	addItemUseCase := cart.NewAddItemUseCase(cartRepository, txManager)
+	removeItemUseCase := cart.NewRemoveItemUseCase(cartRepository, txManager)
 	cartQuery := persistence.NewCartQuery(db)
-	getCartUseCase := query2.NewGetCartUseCase(cartQuery)
+	getCartUseCase := cart.NewGetCartUseCase(cartQuery)
 	cartController := controller.NewCartController(addItemUseCase, removeItemUseCase, getCartUseCase)
 	orderRepository := persistence.NewOrderRepository(db)
-	clearCartOnOrderPlaced := eventhandler.NewClearCartOnOrderPlaced(cartRepository)
-	bus := provideEventBus(clearCartOnOrderPlaced)
-	placeOrderUseCase := command3.NewPlaceOrderUseCase(orderRepository, cartRepository, productRepository, txManager, bus)
-	payOrderUseCase := command3.NewPayOrderUseCase(orderRepository, txManager)
-	shipOrderUseCase := command3.NewShipOrderUseCase(orderRepository, txManager)
-	cancelOrderUseCase := command3.NewCancelOrderUseCase(orderRepository, txManager)
+	customerRepository := persistence.NewCustomerRepository(db)
+	stockRepository := persistence.NewStockRepository(db)
+	couponRepository := persistence.NewCouponRepository(db)
+	placeOrderUseCase := order.NewPlaceOrderUseCase(orderRepository, cartRepository, productRepository, customerRepository, stockRepository, couponRepository, txManager)
+	payOrderUseCase := order.NewPayOrderUseCase(orderRepository, txManager)
+	shipmentRepository := persistence.NewShipmentRepository(db)
+	shipOrderUseCase := order.NewShipOrderUseCase(orderRepository, customerRepository, shipmentRepository, stockRepository, txManager)
+	cancelOrderUseCase := order.NewCancelOrderUseCase(orderRepository, stockRepository, txManager)
 	orderQuery := persistence.NewOrderQuery(db)
-	getOrderUseCase := query3.NewGetOrderUseCase(orderQuery)
+	getOrderUseCase := order.NewGetOrderUseCase(orderQuery)
 	orderController := controller.NewOrderController(placeOrderUseCase, payOrderUseCase, shipOrderUseCase, cancelOrderUseCase, getOrderUseCase)
-	serveMux := provideMux(catalogController, cartController, orderController)
+	registerCustomerUseCase := customer.NewRegisterCustomerUseCase(customerRepository, txManager)
+	addAddressUseCase := customer.NewAddAddressUseCase(customerRepository, txManager)
+	changeDefaultAddressUseCase := customer.NewChangeDefaultAddressUseCase(customerRepository, txManager)
+	removeAddressUseCase := customer.NewRemoveAddressUseCase(customerRepository, txManager)
+	customerQuery := persistence.NewCustomerQuery(db)
+	getCustomerUseCase := customer.NewGetCustomerUseCase(customerQuery)
+	customerController := controller.NewCustomerController(registerCustomerUseCase, addAddressUseCase, changeDefaultAddressUseCase, removeAddressUseCase, getCustomerUseCase)
+	setStockUseCase := inventory.NewSetStockUseCase(stockRepository, txManager)
+	stockQuery := persistence.NewStockQuery(db)
+	getStockUseCase := inventory.NewGetStockUseCase(stockQuery)
+	inventoryController := controller.NewInventoryController(setStockUseCase, getStockUseCase)
+	deliverShipmentUseCase := shipping.NewDeliverShipmentUseCase(shipmentRepository, txManager)
+	shipmentQuery := persistence.NewShipmentQuery(db)
+	getShipmentUseCase := shipping.NewGetShipmentUseCase(shipmentQuery)
+	shippingController := controller.NewShippingController(deliverShipmentUseCase, getShipmentUseCase)
+	issueCouponUseCase := coupon.NewIssueCouponUseCase(couponRepository, txManager)
+	couponQuery := persistence.NewCouponQuery(db)
+	getCouponUseCase := coupon.NewGetCouponUseCase(couponQuery)
+	couponController := controller.NewCouponController(issueCouponUseCase, getCouponUseCase)
+	serveMux := provideMux(catalogController, cartController, orderController, customerController, inventoryController, shippingController, couponController)
 	return serveMux, nil
 }

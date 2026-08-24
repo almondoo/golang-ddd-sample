@@ -3,8 +3,7 @@ package controller
 import (
 	"net/http"
 
-	"github.com/almondoo/golang-ddd-sample/internal/application/order/command"
-	"github.com/almondoo/golang-ddd-sample/internal/application/order/query"
+	orderusecase "github.com/almondoo/golang-ddd-sample/internal/application/usecase/order"
 )
 
 // OrderController は order コンテキストの HTTP エンドポイント群をまとめた
@@ -15,20 +14,20 @@ import (
 // 一切知らない。5 つのユースケース（登録・参照・支払い・発送・取消）を
 // 束ねる薄い橋渡し役に徹する。
 type OrderController struct {
-	placeOrder  *command.PlaceOrderUseCase
-	payOrder    *command.PayOrderUseCase
-	shipOrder   *command.ShipOrderUseCase
-	cancelOrder *command.CancelOrderUseCase
-	getOrder    *query.GetOrderUseCase
+	placeOrder  *orderusecase.PlaceOrderUseCase
+	payOrder    *orderusecase.PayOrderUseCase
+	shipOrder   *orderusecase.ShipOrderUseCase
+	cancelOrder *orderusecase.CancelOrderUseCase
+	getOrder    *orderusecase.GetOrderUseCase
 }
 
 // NewOrderController は OrderController を生成する。
 func NewOrderController(
-	placeOrder *command.PlaceOrderUseCase,
-	payOrder *command.PayOrderUseCase,
-	shipOrder *command.ShipOrderUseCase,
-	cancelOrder *command.CancelOrderUseCase,
-	getOrder *query.GetOrderUseCase,
+	placeOrder *orderusecase.PlaceOrderUseCase,
+	payOrder *orderusecase.PayOrderUseCase,
+	shipOrder *orderusecase.ShipOrderUseCase,
+	cancelOrder *orderusecase.CancelOrderUseCase,
+	getOrder *orderusecase.GetOrderUseCase,
 ) *OrderController {
 	return &OrderController{
 		placeOrder:  placeOrder,
@@ -56,6 +55,9 @@ func (c *OrderController) Register(mux *http.ServeMux) {
 // placeOrderRequest は注文確定エンドポイントのリクエストボディである。
 type placeOrderRequest struct {
 	CustomerID string `json:"customerId"`
+	// CouponCode は適用したいクーポンのコードである（任意項目）。
+	// 空文字列であればクーポンを適用しない。
+	CouponCode string `json:"couponCode"`
 }
 
 // placeOrderResponse は注文確定エンドポイントのレスポンスボディである。
@@ -70,8 +72,9 @@ func (c *OrderController) handlePlaceOrder(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	out, err := c.placeOrder.Execute(r.Context(), command.PlaceOrderInput{
+	out, err := c.placeOrder.Execute(r.Context(), orderusecase.PlaceOrderInput{
 		CustomerID: req.CustomerID,
+		CouponCode: req.CouponCode,
 	})
 	if err != nil {
 		WriteError(w, err)
@@ -96,7 +99,7 @@ func (c *OrderController) handleGetOrder(w http.ResponseWriter, r *http.Request)
 func (c *OrderController) handlePayOrder(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	if err := c.payOrder.Execute(r.Context(), command.PayOrderInput{OrderID: id}); err != nil {
+	if err := c.payOrder.Execute(r.Context(), orderusecase.PayOrderInput{OrderID: id}); err != nil {
 		WriteError(w, err)
 		return
 	}
@@ -107,7 +110,7 @@ func (c *OrderController) handlePayOrder(w http.ResponseWriter, r *http.Request)
 func (c *OrderController) handleShipOrder(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	if err := c.shipOrder.Execute(r.Context(), command.ShipOrderInput{OrderID: id}); err != nil {
+	if err := c.shipOrder.Execute(r.Context(), orderusecase.ShipOrderInput{OrderID: id}); err != nil {
 		WriteError(w, err)
 		return
 	}
@@ -118,7 +121,7 @@ func (c *OrderController) handleShipOrder(w http.ResponseWriter, r *http.Request
 func (c *OrderController) handleCancelOrder(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	if err := c.cancelOrder.Execute(r.Context(), command.CancelOrderInput{OrderID: id}); err != nil {
+	if err := c.cancelOrder.Execute(r.Context(), orderusecase.CancelOrderInput{OrderID: id}); err != nil {
 		WriteError(w, err)
 		return
 	}

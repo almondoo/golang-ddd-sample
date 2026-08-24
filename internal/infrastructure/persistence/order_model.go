@@ -21,6 +21,13 @@ type OrderModel struct {
 	CustomerID string
 	Status     string
 	PlacedAt   time.Time
+	// CouponCode は適用済みクーポンのコードである。空文字列は未適用を表す。
+	CouponCode string
+	// DiscountAmount は適用済みの割引額である。本サンプルは通貨を JPY のみ
+	// 扱う前提（shared.JPY 参照）のため、明細のように Currency 列を別途
+	// 持たせず、CouponCode が空文字列でない場合にのみ JPY として解釈する
+	// という単純化を採用している。
+	DiscountAmount int64
 }
 
 // TableName は GORM に対して物理テーブル名を明示する。
@@ -80,16 +87,30 @@ func orderFromModels(model OrderModel, itemModels []OrderItemModel) (*order.Orde
 		items = append(items, order.ReconstructOrderItem(im.ProductID, im.ProductName, unitPrice, im.Quantity))
 	}
 
-	return order.ReconstructOrder(orderID, customerID, items, status, model.PlacedAt), nil
+	// 割引額の復元: クーポン未適用（CouponCode が空文字列）の場合は
+	// ゼロ値の Money（Order.ApplyDiscount を一度も呼んでいない状態と同じ）を
+	// そのまま渡す。適用済みの場合のみ JPY として金額を復元する
+	// （本サンプルが通貨を JPY のみ扱う前提は OrderModel のコメントを参照）。
+	discountAmount := shared.Money{}
+	if model.CouponCode != "" {
+		discountAmount, err = shared.NewMoney(model.DiscountAmount, shared.JPY)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return order.ReconstructOrder(orderID, customerID, items, status, model.PlacedAt, model.CouponCode, discountAmount), nil
 }
 
 // orderModelFromDomain は Order 集約から orders テーブル用のモデルを組み立てる。
 func orderModelFromDomain(o *order.Order) OrderModel {
 	return OrderModel{
-		ID:         o.ID().String(),
-		CustomerID: o.CustomerID().String(),
-		Status:     o.Status().String(),
-		PlacedAt:   o.PlacedAt(),
+		ID:             o.ID().String(),
+		CustomerID:     o.CustomerID().String(),
+		Status:         o.Status().String(),
+		PlacedAt:       o.PlacedAt(),
+		CouponCode:     o.CouponCode(),
+		DiscountAmount: o.DiscountAmount().Amount(),
 	}
 }
 

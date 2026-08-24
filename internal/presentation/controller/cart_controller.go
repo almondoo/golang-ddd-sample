@@ -3,8 +3,7 @@ package controller
 import (
 	"net/http"
 
-	"github.com/almondoo/golang-ddd-sample/internal/application/cart/command"
-	"github.com/almondoo/golang-ddd-sample/internal/application/cart/query"
+	cartusecase "github.com/almondoo/golang-ddd-sample/internal/application/usecase/cart"
 )
 
 // CartController は cart コンテキストの HTTP エンドポイント群をまとめた
@@ -15,16 +14,16 @@ import (
 // ユースケースの入力形式に変換し、ユースケースの出力（または業務エラー）を
 // HTTP レスポンスへ変換する橋渡しに徹する。
 type CartController struct {
-	addItem    *command.AddItemUseCase
-	removeItem *command.RemoveItemUseCase
-	getCart    *query.GetCartUseCase
+	addItem    *cartusecase.AddItemUseCase
+	removeItem *cartusecase.RemoveItemUseCase
+	getCart    *cartusecase.GetCartUseCase
 }
 
 // NewCartController は CartController を生成する。
 func NewCartController(
-	addItem *command.AddItemUseCase,
-	removeItem *command.RemoveItemUseCase,
-	getCart *query.GetCartUseCase,
+	addItem *cartusecase.AddItemUseCase,
+	removeItem *cartusecase.RemoveItemUseCase,
+	getCart *cartusecase.GetCartUseCase,
 ) *CartController {
 	return &CartController{
 		addItem:    addItem,
@@ -68,7 +67,7 @@ func (c *CartController) handleAddItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := c.addItem.Execute(r.Context(), command.AddItemInput{
+	err := c.addItem.Execute(r.Context(), cartusecase.AddItemInput{
 		CustomerID: customerID,
 		ProductID:  req.ProductID,
 		Quantity:   req.Quantity,
@@ -85,7 +84,7 @@ func (c *CartController) handleRemoveItem(w http.ResponseWriter, r *http.Request
 	customerID := r.PathValue("customerID")
 	productID := r.PathValue("productID")
 
-	err := c.removeItem.Execute(r.Context(), command.RemoveItemInput{
+	err := c.removeItem.Execute(r.Context(), cartusecase.RemoveItemInput{
 		CustomerID: customerID,
 		ProductID:  productID,
 	})

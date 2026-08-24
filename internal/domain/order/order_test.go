@@ -52,7 +52,7 @@ func TestNewOrder(t *testing.T) {
 		customerID := mustCustomerID(t)
 		item := mustOrderItem(t, "product-1", "商品A", 1000, 2)
 
-		o, err := order.NewOrder(customerID, []order.OrderItem{item})
+		o, err := order.NewOrder(customerID, []order.OrderItem{item}, fixedPlacedAt)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -68,12 +68,17 @@ func TestNewOrder(t *testing.T) {
 		if len(o.Items()) != 1 {
 			t.Fatalf("len(Items()) = %d, want 1", len(o.Items()))
 		}
+		// PlacedAt は NewOrder が time.Now() ではなく引数 now をそのまま
+		// 採用することを検証する（ドメイン層の決定性の担保）。
+		if !o.PlacedAt().Equal(fixedPlacedAt) {
+			t.Fatalf("PlacedAt() = %v, want %v", o.PlacedAt(), fixedPlacedAt)
+		}
 	})
 
 	t.Run("order without items is rejected as a domain rule violation", func(t *testing.T) {
 		customerID := mustCustomerID(t)
 
-		_, err := order.NewOrder(customerID, nil)
+		_, err := order.NewOrder(customerID, nil, fixedPlacedAt)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -81,59 +86,6 @@ func TestNewOrder(t *testing.T) {
 			t.Fatalf("expected domain rule error, got %v", err)
 		}
 	})
-}
-
-// TestNewOrder_RecordsOrderPlacedEvent は、NewOrder が OrderPlaced イベントを
-// ちょうど 1 件記録すること、および PullEvents が「一度取り出したら空になる」
-// という二重配信防止の契約を守っていることを確認する。
-func TestNewOrder_RecordsOrderPlacedEvent(t *testing.T) {
-	customerID := mustCustomerID(t)
-	item := mustOrderItem(t, "product-1", "商品A", 1000, 1)
-
-	o, err := order.NewOrder(customerID, []order.OrderItem{item})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	events := o.PullEvents()
-	if len(events) != 1 {
-		t.Fatalf("len(PullEvents()) = %d, want 1", len(events))
-	}
-	if events[0].EventName() != order.OrderPlacedEventName {
-		t.Fatalf("EventName() = %q, want %q", events[0].EventName(), order.OrderPlacedEventName)
-	}
-	placed, ok := events[0].(order.OrderPlaced)
-	if !ok {
-		t.Fatalf("event type = %T, want order.OrderPlaced", events[0])
-	}
-	if placed.OrderID() != o.ID() {
-		t.Errorf("OrderID() = %v, want %v", placed.OrderID(), o.ID())
-	}
-	if placed.CustomerID() != customerID {
-		t.Errorf("CustomerID() = %v, want %v", placed.CustomerID(), customerID)
-	}
-
-	// 2 回目の PullEvents は空でなければならない（二重配信防止）。
-	second := o.PullEvents()
-	if len(second) != 0 {
-		t.Fatalf("second PullEvents() = %d events, want 0", len(second))
-	}
-}
-
-// TestOrder_ReconstructOrder_DoesNotRecordEvent は、DB からの復元では
-// OrderPlaced イベントが再記録されないことを確認する。すでに確定済みの
-// 過去の注文を読み込むたびにイベントが再発火すると、カートが誤って
-// 何度も空にされる等の意図しない副作用が起きてしまうためである。
-func TestOrder_ReconstructOrder_DoesNotRecordEvent(t *testing.T) {
-	customerID := mustCustomerID(t)
-	item := mustOrderItem(t, "product-1", "商品A", 1000, 1)
-
-	o := order.ReconstructOrder(order.OrderID("order-1"), customerID, []order.OrderItem{item}, order.StatusPending, fixedPlacedAt)
-
-	events := o.PullEvents()
-	if len(events) != 0 {
-		t.Fatalf("PullEvents() after ReconstructOrder = %d events, want 0", len(events))
-	}
 }
 
 // TestOrder_StateTransitions は、状態機械の遷移マトリクスを網羅的に検証する。
@@ -181,7 +133,7 @@ func TestOrder_StateTransitions(t *testing.T) {
 		t.Run(string(tt.from)+"/"+tt.trans.op, func(t *testing.T) {
 			customerID := mustCustomerID(t)
 			item := mustOrderItem(t, "product-1", "商品A", 1000, 1)
-			o := order.ReconstructOrder(order.OrderID("order-1"), customerID, []order.OrderItem{item}, tt.from, fixedPlacedAt)
+			o := order.ReconstructOrder(order.OrderID("order-1"), customerID, []order.OrderItem{item}, tt.from, fixedPlacedAt, "", shared.Money{})
 
 			err := tt.trans.apply(o)
 			if tt.wantErr {
@@ -214,7 +166,7 @@ func TestOrder_TotalAmount(t *testing.T) {
 		mustOrderItem(t, "product-2", "商品B", 500, 3),  // 1500
 	}
 
-	o, err := order.NewOrder(customerID, items)
+	o, err := order.NewOrder(customerID, items, fixedPlacedAt)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -229,4 +181,110 @@ func TestOrder_TotalAmount(t *testing.T) {
 	if total.Currency() != shared.JPY {
 		t.Fatalf("TotalAmount().Currency() = %v, want %v", total.Currency(), shared.JPY)
 	}
+}
+
+// TestOrder_PayableAmount_WithoutDiscount は、クーポン未適用時の
+// PayableAmount が TotalAmount と一致することを確認する。
+func TestOrder_PayableAmount_WithoutDiscount(t *testing.T) {
+	customerID := mustCustomerID(t)
+	item := mustOrderItem(t, "product-1", "商品A", 1000, 2) // 2000
+
+	o, err := order.NewOrder(customerID, []order.OrderItem{item}, fixedPlacedAt)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	payable, err := o.PayableAmount()
+	if err != nil {
+		t.Fatalf("PayableAmount() unexpected error: %v", err)
+	}
+	if payable.Amount() != 2000 {
+		t.Fatalf("PayableAmount().Amount() = %d, want 2000", payable.Amount())
+	}
+}
+
+// TestOrder_ApplyDiscount は、割引適用の可否を Order 集約自身が守る
+// 不変条件（pending 限定・二重適用禁止・合計超過禁止）を検証する。
+func TestOrder_ApplyDiscount(t *testing.T) {
+	t.Run("succeeds on a pending order and updates PayableAmount", func(t *testing.T) {
+		customerID := mustCustomerID(t)
+		item := mustOrderItem(t, "product-1", "商品A", 1000, 2) // 2000
+		o, err := order.NewOrder(customerID, []order.OrderItem{item}, fixedPlacedAt)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if err := o.ApplyDiscount("SUMMER-500", mustMoney(t, 500)); err != nil {
+			t.Fatalf("ApplyDiscount() unexpected error: %v", err)
+		}
+		if o.CouponCode() != "SUMMER-500" {
+			t.Fatalf("CouponCode() = %q, want %q", o.CouponCode(), "SUMMER-500")
+		}
+		if o.DiscountAmount().Amount() != 500 {
+			t.Fatalf("DiscountAmount().Amount() = %d, want 500", o.DiscountAmount().Amount())
+		}
+
+		payable, err := o.PayableAmount()
+		if err != nil {
+			t.Fatalf("PayableAmount() unexpected error: %v", err)
+		}
+		if payable.Amount() != 1500 {
+			t.Fatalf("PayableAmount().Amount() = %d, want 1500", payable.Amount())
+		}
+	})
+
+	t.Run("rejected on a non-pending order", func(t *testing.T) {
+		customerID := mustCustomerID(t)
+		item := mustOrderItem(t, "product-1", "商品A", 1000, 2)
+		o := order.ReconstructOrder(order.OrderID("order-1"), customerID, []order.OrderItem{item}, order.StatusPaid, fixedPlacedAt, "", shared.Money{})
+
+		err := o.ApplyDiscount("SUMMER-500", mustMoney(t, 500))
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if !shared.IsDomainRuleError(err) {
+			t.Fatalf("expected domain rule error, got %v", err)
+		}
+	})
+
+	t.Run("rejected when a coupon is already applied", func(t *testing.T) {
+		customerID := mustCustomerID(t)
+		item := mustOrderItem(t, "product-1", "商品A", 1000, 2)
+		o, err := order.NewOrder(customerID, []order.OrderItem{item}, fixedPlacedAt)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if err := o.ApplyDiscount("FIRST-100", mustMoney(t, 100)); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		err = o.ApplyDiscount("SECOND-100", mustMoney(t, 100))
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if !shared.IsDomainRuleError(err) {
+			t.Fatalf("expected domain rule error, got %v", err)
+		}
+		// 最初に適用したクーポンの状態が保持されたままであることも確認する。
+		if o.CouponCode() != "FIRST-100" {
+			t.Fatalf("CouponCode() = %q, want %q", o.CouponCode(), "FIRST-100")
+		}
+	})
+
+	t.Run("rejected when discount exceeds total amount", func(t *testing.T) {
+		customerID := mustCustomerID(t)
+		item := mustOrderItem(t, "product-1", "商品A", 1000, 1) // 1000
+		o, err := order.NewOrder(customerID, []order.OrderItem{item}, fixedPlacedAt)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		err = o.ApplyDiscount("TOO-MUCH", mustMoney(t, 1001))
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if !shared.IsDomainRuleError(err) {
+			t.Fatalf("expected domain rule error, got %v", err)
+		}
+	})
 }

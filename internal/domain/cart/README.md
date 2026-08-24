@@ -23,11 +23,23 @@
    行う責務とする。
 
 参照画面で金額を表示したい場合は、ドメイン層を経由せず、クエリ側
-（`internal/application/cart/query`、`internal/infrastructure/persistence/cart_query_service.go`）
+（`internal/application/usecase/cart`、`internal/infrastructure/persistence/cart_query_service.go`）
 で cart_items テーブルと products テーブルを SQL レベルで結合して求める。
 これは CQRS 的な発想であり、「書き込み側（ドメインモデル）は整合性の
 番人」「読み取り側は表示に必要な形へ自由に加工してよい」という
 役割分担に基づく。
+
+**ただしこの JOIN は疎結合ではない。** 書き込み側（ドメインモデル）は
+下記「catalog への ID のみの参照」の通り型レベルで catalog から分離
+されているが、読み取り側の JOIN は catalog の物理スキーマ
+（`products` テーブル名、`name` / `price_amount` カラム名。
+`internal/infrastructure/persistence/cart_query_service.go:54-55` に
+ハードコードされている）に直接依存している。catalog 側がテーブル名や
+カラム名を変更しても、この JOIN はコンパイルエラーにはならず、実行時に
+SQL エラーまたは意図しない結果を返して初めて壊れていることが分かる。
+つまり「コンテキスト間の疎結合を破らない」とは言えず、正確には
+「書き込み側は型レベルで分離されているが、読み取り側にはスキーマ結合が
+残っている」という状態である。
 
 ## catalog への ID のみの参照
 

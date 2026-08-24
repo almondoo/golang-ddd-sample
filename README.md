@@ -1,6 +1,6 @@
 # golang-ddd-sample
 
-Go で DDD(ドメイン駆動設計)の戦術パターンを学ぶためのサンプルリポジトリです。EC(ネットショップ)を題材に、商品カタログ・カート・注文の 3 コンテキストをオニオンアーキテクチャ + 軽量 CQRS で実装しています。読んで学ぶことを主目的にしており、すべてのコードに日本語の解説コメントを付けています。
+Go で DDD(ドメイン駆動設計)の戦術パターンを学ぶためのサンプルリポジトリです。EC(ネットショップ)を題材に、商品カタログ・カート・注文・顧客・在庫・配送・クーポンの 7 コンテキストをオニオンアーキテクチャ + 軽量 CQRS で実装しています。読んで学ぶことを主目的にしており、すべてのコードに日本語の解説コメントを付けています。
 
 ## 技術スタック
 
@@ -43,25 +43,26 @@ go run github.com/almondoo/wire/cmd/wire ./cmd/api
 │   └── execution-flow.md        # リクエスト実行順序の図解
 ├── internal/
 │   ├── domain/                  # ドメイン層(最内層・外部依存ゼロ)
-│   │   ├── shared/              # 共有カーネル: Money、ドメインイベント、集約ベース
+│   │   ├── shared/              # 共有カーネル: Money、共通エラーなど
 │   │   ├── catalog/             # 商品カタログ: Product 集約、値オブジェクト、リポジトリIF
 │   │   ├── cart/                # カート: Cart 集約、CartItem、数量などの不変条件
-│   │   └── order/               # 注文: Order 集約、状態遷移、OrderPlaced イベント
+│   │   ├── order/               # 注文: Order 集約、状態遷移、クーポン割引
+│   │   ├── customer/            # 顧客: Customer 集約、Address(子エンティティ)
+│   │   ├── inventory/           # 在庫: Stock 集約、引当/解放/消込
+│   │   ├── shipping/            # 配送: Shipment 集約、状態遷移
+│   │   └── coupon/              # クーポン: Coupon 集約、金額/割合割引
 │   ├── application/             # ユースケース層(1ファイル = 1ユースケース)
 │   │   ├── tx/                  # トランザクション境界のポート(インターフェース)
-│   │   ├── catalog/
-│   │   │   ├── command/         # 書き込み系: 商品登録、価格改定
-│   │   │   └── query/           # 読み取り系: 一覧、詳細
-│   │   ├── cart/
-│   │   │   ├── command/         # カートへの追加・削除
-│   │   │   ├── query/           # カート内容の取得
-│   │   │   └── eventhandler/    # OrderPlaced 購読 → カートを空にする
-│   │   └── order/
-│   │       ├── command/         # 注文確定、支払い、発送、キャンセル
-│   │       └── query/           # 注文詳細の取得
+│   │   └── usecase/
+│   │       ├── catalog/         # 商品登録・価格改定(command)、一覧・詳細取得(query)
+│   │       ├── cart/            # カートへの追加・削除(command)、カート取得(query)
+│   │       ├── order/           # 注文確定・支払い・発送・キャンセル(command)、注文詳細取得(query)
+│   │       ├── customer/        # 顧客登録・住所追加/デフォルト変更/削除(command)、顧客詳細取得(query)
+│   │       ├── inventory/       # 在庫数設定(command)、在庫詳細取得(query)
+│   │       ├── shipping/        # 配達完了(command)、配送詳細取得(query)
+│   │       └── coupon/          # クーポン発行(command)、クーポン詳細取得(query)
 │   ├── infrastructure/          # 技術詳細(最外層)
-│   │   ├── persistence/         # GORM モデル、リポジトリ実装、クエリサービス実装
-│   │   └── event/               # インメモリの同期イベントバス
+│   │   └── persistence/         # GORM モデル、リポジトリ実装、クエリサービス実装
 │   └── presentation/
 │       └── controller/          # HTTP コントローラ、ルーティング、エラー→ステータス変換
 └── README.md
@@ -70,7 +71,7 @@ go run github.com/almondoo/wire/cmd/wire ./cmd/api
 各層の役割と設計判断は、それぞれのディレクトリ直下の README で解説しています。
 
 - [internal/domain/README.md](internal/domain/README.md) — 依存方向のルール、集約・値オブジェクト・リポジトリIF
-- [internal/application/README.md](internal/application/README.md) — command / query 分離、トランザクション境界、イベント発行
+- [internal/application/README.md](internal/application/README.md) — command / query の分離(ファイル名・依存の形で区別)、トランザクション境界、コンテキストをまたぐ直接呼び出し
 - [internal/infrastructure/README.md](internal/infrastructure/README.md) — ドメインモデルと GORM モデルの分離(データマッパー)
 - [internal/presentation/README.md](internal/presentation/README.md) — DTO 変換、エラーマッピング
 
@@ -85,11 +86,24 @@ go run github.com/almondoo/wire/cmd/wire ./cmd/api
 | `GET /carts/{customerID}` | カート内容を取得する | query |
 | `POST /carts/{customerID}/items` | カートに商品を追加する | command |
 | `DELETE /carts/{customerID}/items/{productID}` | カートから商品を除く | command |
-| `POST /orders` | カートの内容から注文を確定する | command |
+| `POST /orders` | カートの内容から注文を確定する(`couponCode` は任意) | command |
 | `GET /orders/{id}` | 注文詳細を取得する | query |
 | `POST /orders/{id}/pay` | 支払いを記録する(状態遷移) | command |
 | `POST /orders/{id}/ship` | 発送を記録する(状態遷移) | command |
 | `POST /orders/{id}/cancel` | 注文をキャンセルする | command |
+| `POST /customers` | 顧客を登録する | command |
+| `GET /customers/{id}` | 顧客詳細(住所を含む)を取得する | query |
+| `POST /customers/{id}/addresses` | 顧客に配送先住所を追加する | command |
+| `PUT /customers/{id}/addresses/{addressID}/default` | デフォルト住所を変更する | command |
+| `DELETE /customers/{id}/addresses/{addressID}` | 住所を削除する | command |
+| `PUT /products/{id}/stock` | 商品の在庫数を設定する | command |
+| `GET /products/{id}/stock` | 商品の在庫を取得する | query |
+| `GET /shipments/{id}` | 配送詳細を取得する | query |
+| `POST /shipments/{id}/deliver` | 配達完了を記録する(状態遷移) | command |
+| `POST /coupons` | クーポンを発行する | command |
+| `GET /coupons/{code}` | クーポン詳細を取得する | query |
+
+`POST /orders` のリクエストボディは `{"customerId": "...", "couponCode": "..."}` です。`couponCode` は任意項目で、省略(空文字列)すればクーポンを適用せずに注文を確定します。
 
 ## このサンプルの学習ポイント
 
@@ -99,10 +113,20 @@ go run github.com/almondoo/wire/cmd/wire ./cmd/api
 
 **値オブジェクトによる primitive obsession の回避。** `Money`(負値と通貨不一致を拒否)、各種 ID 型(UUID のラッパー)で、`int64` や `string` の生値がドメインを流れることを防ぎます。
 
-**ドメインイベントによるコンテキスト間連携。** 注文確定時に `Order` 集約が `OrderPlaced` を記録し、ユースケースが永続化後に発行、カート側のハンドラがそれを購読してカートを空にします。注文コンテキストはカートの都合を知りません。
+**直接呼び出しによるコンテキスト間連携。** 注文確定ユースケースが application 層で cart を直接操作する設計にし、コンテキスト間連携を最短の形で示しています(ドメインイベント + 購読による疎結合化は発展形として docs で言及しています)。
 
 **トランザクション境界はユースケースが決める。** リポジトリは自分でトランザクションを張らず、`tx.Manager` が context 経由で伝搬するトランザクションに参加します。
 
 **依存の組み立ては composition root に集約。** controller は command / query を問わず必ず usecase を経由し、その依存関係は `cmd/api/wire.go` に宣言して wire がコンパイル時にコード生成します。配線ミスが実行時エラーではなくコンパイルエラーとして検出できます。
 
-リクエストが各層をどの順序で通るかは [docs/execution-flow.md](docs/execution-flow.md) の図を参照してください。
+**集約の見本: Customer + Address。** `customer` コンテキストは「集約ルート経由でしか子エンティティを操作させない」という DDD の定石をもっとも分かりやすい形で示しています。`Address` は独自の識別子(`AddressID`)を持つ子エンティティですが、生成・変更はすべて `Customer` のメソッド(`AddAddress` / `ChangeDefaultAddress` / `RemoveAddress`)を経由します。「デフォルト住所は住所が1件でもあれば必ずちょうど1つ存在する」という不変条件は、兄弟にあたる他の住所の状態を横断的に見なければ守れないため、全住所を見渡せる集約ルートだけがこの整合性を保証できます。
+
+**複数コンテキストのオーケストレーション: 注文確定。** `PlaceOrderUseCase` は顧客(存在確認)・カート(内容の読み取り)・カタログ(価格のスナップショット)・在庫(引当)・クーポン(割引適用)という 5 つのコンテキストを、1 つのトランザクションの中で束ねます。各コンテキストの不変条件はそれぞれの集約(`Customer` / `Stock` / `Coupon` / `Order`)自身が守り、ユースケースは「どの順番でどの集約を呼ぶか」という手順の組み立てだけに徹します。発送(`ShipOrderUseCase`)でも同様に、配送(`Shipment` の生成)と在庫の消込(`ConsumeReserved`)を 1 トランザクションでまとめて行っています。
+
+## ドキュメント
+
+- [docs/context-map.md](docs/context-map.md) — コンテキストマップ(戦略的設計): 7 bounded context + Shared Kernel の関係、ID 型対照表
+- [docs/execution-flow.md](docs/execution-flow.md) — リクエストが各層を通る順序の図解
+- [docs/ddd/](docs/ddd/README.md) — DDD の構成要素(集約・値オブジェクト・リポジトリ・CQRS など)を1要素=1ファイルで図解つき解説
+- [docs/ddd-research.md](docs/ddd-research.md) — DDD 原則の出典検証済みリサーチ(Vernon・Evans・Fowler の逐語引用つき)
+- [docs/specs/ddd-improvements.md](docs/specs/ddd-improvements.md) — 本リポジトリを DDD 原則と突き合わせた監査結果と改善スペック

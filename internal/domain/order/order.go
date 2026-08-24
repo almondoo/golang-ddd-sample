@@ -15,19 +15,18 @@ import (
 // それはドメイン層ではなくアプリケーション層（PlaceOrderUseCase）の
 // 責務である。order ドメインパッケージが cart / catalog パッケージを
 // import しないことは、コンテキストの自律性を保つための最重要ルールである。
-//
-// shared.AggregateBase を埋め込んでいるのは、Order が他コンテキストへ
-// 通知すべき重要な出来事（OrderPlaced）を持つためである。catalog.Product
-// がイベントを持たないのとは対照的に、Order は「注文確定」という
-// 業務上の一大イベントの発生源になる。
 type Order struct {
-	shared.AggregateBase
-
 	id         OrderID
 	customerID CustomerID
 	items      []OrderItem
 	status     Status
 	placedAt   time.Time
+	// couponCode は適用済みクーポンのコードである。空文字列は「クーポン未適用」を表す。
+	// discountAmount と合わせて ApplyDiscount 経由でのみ設定される。
+	couponCode string
+	// discountAmount は適用済みの割引額である。クーポン未適用時はゼロ値の
+	// Money（amount=0, currency未設定）のままとなる。
+	discountAmount shared.Money
 }
 
 // NewOrder は新規注文を確定するコンストラクタである。
@@ -37,12 +36,15 @@ type Order struct {
 // 個々の OrderItem 自体の妥当性（数量 1 以上等）は NewOrderItem
 // コンストラクタがすでに保証済みという前提に立つ。
 //
-// 生成と同時に StatusPending をセットし、OrderPlaced イベントを記録する。
-// このイベントはまだ「配信」されていない点に注意する。配信（Publish）は
-// アプリケーション層が Save の成功後に行う責務であり、集約はあくまで
-// 「注文確定という事実が発生した」ことを記録するだけに留める
-// （理由の詳細は shared.AggregateBase のコメントを参照）。
-func NewOrder(customerID CustomerID, items []OrderItem) (*Order, error) {
+// 生成と同時に StatusPending をセットする。
+//
+// 【時刻もまた入力】
+// ドメイン層では time.Now() を呼ばず、時刻を引数で受けることで決定的な
+// テストを可能にする（coupon.Coupon.Use / IsExpired と同じ方針）。もし
+// 内部で time.Now() を呼んでしまうと、PlacedAt の値がテスト実行時刻に
+// 依存してしまい、再現性のあるテストが書けなくなる。呼び出し側
+// （PlaceOrderUseCase）が now を注入する。
+func NewOrder(customerID CustomerID, items []OrderItem, now time.Time) (*Order, error) {
 	if len(items) == 0 {
 		return nil, shared.NewDomainRuleError("order: order must contain at least one item")
 	}
@@ -55,30 +57,29 @@ func NewOrder(customerID CustomerID, items []OrderItem) (*Order, error) {
 		customerID: customerID,
 		items:      itemsCopy,
 		status:     StatusPending,
-		placedAt:   time.Now(),
+		placedAt:   now,
 	}
-	o.Record(NewOrderPlaced(o.id, o.customerID))
 	return o, nil
 }
 
 // ReconstructOrder は永続化層から読み込んだデータをもとに Order を再構築する。
 //
 // NewOrder との違いは ReconstructProduct / ReconstructCart と同じ理由による。
-// 加えて重要な点として、ReconstructOrder は OrderPlaced イベントを
-// 記録しない。イベントは「今まさに起きた出来事」を表すものであり、
-// すでに過去に確定して DB に保存済みの注文を読み込むたびに
-// OrderPlaced を再送してしまうと、カートを何度も空にしようとする等の
-// 意図しない副作用の再発火につながってしまう。
-func ReconstructOrder(id OrderID, customerID CustomerID, items []OrderItem, status Status, placedAt time.Time) *Order {
+// couponCode が空文字列の場合はクーポン未適用として扱い、discountAmount は
+// そのまま素通しする（永続化層側で「未適用ならゼロ値の Money」を組み立てる
+// ことを前提とする）。
+func ReconstructOrder(id OrderID, customerID CustomerID, items []OrderItem, status Status, placedAt time.Time, couponCode string, discountAmount shared.Money) *Order {
 	itemsCopy := make([]OrderItem, len(items))
 	copy(itemsCopy, items)
 
 	return &Order{
-		id:         id,
-		customerID: customerID,
-		items:      itemsCopy,
-		status:     status,
-		placedAt:   placedAt,
+		id:             id,
+		customerID:     customerID,
+		items:          itemsCopy,
+		status:         status,
+		placedAt:       placedAt,
+		couponCode:     couponCode,
+		discountAmount: discountAmount,
 	}
 }
 
@@ -135,6 +136,72 @@ func (o *Order) TotalAmount() (shared.Money, error) {
 		}
 	}
 	return total, nil
+}
+
+// CouponCode は適用済みクーポンのコードを返す。空文字列は未適用を表す。
+func (o *Order) CouponCode() string {
+	return o.couponCode
+}
+
+// DiscountAmount は適用済みの割引額を返す。クーポン未適用の場合はゼロ値の
+// Money（amount=0）が返る。
+func (o *Order) DiscountAmount() shared.Money {
+	return o.discountAmount
+}
+
+// PayableAmount は実際に支払うべき金額（TotalAmount - DiscountAmount）を返す。
+// クーポン未適用の場合は discountAmount がゼロ円のままなので、
+// 実質的に TotalAmount と同額になる。
+func (o *Order) PayableAmount() (shared.Money, error) {
+	total, err := o.TotalAmount()
+	if err != nil {
+		return shared.Money{}, err
+	}
+	if o.couponCode == "" {
+		// 未適用時は discountAmount の通貨単位が未設定（ゼロ値）のままであり、
+		// そのまま total.Subtract(discountAmount) を呼ぶと通貨不一致で
+		// エラーになってしまう。そのため未適用時は total をそのまま返す。
+		return total, nil
+	}
+	return total.Subtract(o.discountAmount)
+}
+
+// ApplyDiscount はクーポンによる割引を注文に適用する。
+//
+// 【割引の妥当性は Order 集約自身が守る】
+// 「どのクーポンが有効か」「割引額をいくら計算するか」はクーポンコンテキスト
+// （coupon.Coupon）の責務だが、「その割引を注文に適用してよいか」という
+// 判断（注文の状態・二重適用・金額の整合性）は注文コンテキストの不変条件
+// であり、Order 集約自身が守るべきものである。そのため、割引額の計算結果を
+// 受け取った後の適用可否チェックはすべてこのメソッドに閉じ込める。
+func (o *Order) ApplyDiscount(couponCode string, discount shared.Money) error {
+	if o.status != StatusPending {
+		return shared.NewDomainRuleError("order: cannot apply discount to an order in status %q", o.status)
+	}
+	if o.couponCode != "" {
+		return shared.NewDomainRuleError("order: coupon %q is already applied to this order", o.couponCode)
+	}
+	if couponCode == "" {
+		return shared.NewDomainRuleError("order: coupon code must not be empty")
+	}
+
+	total, err := o.TotalAmount()
+	if err != nil {
+		return err
+	}
+	// 割引額が合計金額を超える場合（通貨不一致を含む）はドメインルール違反
+	// として拒否する。Money.Subtract は「通貨不一致」と「結果が負になる」の
+	// 両方をすでに検証してくれるため、ここではその結果を借りて「割引後に
+	// 支払うべき金額」を検証する。戻り値そのものは使わず、検証のためだけに
+	// 呼び出している点に注意する（実際の PayableAmount 計算は別メソッドで
+	// 都度行う）。
+	if _, err := total.Subtract(discount); err != nil {
+		return shared.NewDomainRuleError("order: discount %v must not exceed total amount %v: %v", discount, total, err)
+	}
+
+	o.couponCode = couponCode
+	o.discountAmount = discount
+	return nil
 }
 
 // 【状態遷移】

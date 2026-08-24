@@ -5,10 +5,10 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/almondoo/golang-ddd-sample/internal/application/cart/query"
+	cartusecase "github.com/almondoo/golang-ddd-sample/internal/application/usecase/cart"
 )
 
-// CartQuery は query.CartQueryService の GORM 実装である。
+// CartQuery は cartusecase.CartQueryService の GORM 実装である。
 //
 // cart.Repository を経由せず gorm.DB へ直接クエリを発行しているのは、
 // カート集約が持たない「商品名」「価格」を画面表示のために取得したい
@@ -26,8 +26,8 @@ func NewCartQuery(db *gorm.DB) *CartQuery {
 	return &CartQuery{db: db}
 }
 
-// コンパイル時に CartQuery が query.CartQueryService を満たすことを保証する。
-var _ query.CartQueryService = (*CartQuery)(nil)
+// コンパイル時に CartQuery が cartusecase.CartQueryService を満たすことを保証する。
+var _ cartusecase.CartQueryService = (*CartQuery)(nil)
 
 // cartItemJoinRow は cart_items × products の JOIN 結果を受け取るための
 // 内部専用の一時構造体である。DTO と似た形をしているが、
@@ -43,9 +43,9 @@ type cartItemJoinRow struct {
 //
 // カートが存在しない場合（cart_items 行が 0 件）や、明細はあるが金額計算の
 // 結果 0 円になる場合であっても、エラーにはせず空の CartDTO を返す。
-// これは query.CartQueryService のドキュメントコメントに記した通り、
+// これは cartusecase.CartQueryService のドキュメントコメントに記した通り、
 // 参照側にとって「カートがない」と「カートは空」は区別する意味がないためである。
-func (q *CartQuery) FindByCustomerID(ctx context.Context, customerID string) (*query.CartDTO, error) {
+func (q *CartQuery) FindByCustomerID(ctx context.Context, customerID string) (*cartusecase.CartDTO, error) {
 	db := DBFromContext(ctx, q.db)
 
 	var rows []cartItemJoinRow
@@ -59,11 +59,11 @@ func (q *CartQuery) FindByCustomerID(ctx context.Context, customerID string) (*q
 		return nil, err
 	}
 
-	items := make([]query.CartItemDTO, 0, len(rows))
+	items := make([]cartusecase.CartItemDTO, 0, len(rows))
 	var total int64
 	for _, r := range rows {
 		subtotal := r.PriceAmount * int64(r.Quantity)
-		items = append(items, query.CartItemDTO{
+		items = append(items, cartusecase.CartItemDTO{
 			ProductID:   r.ProductID,
 			ProductName: r.ProductName,
 			PriceAmount: r.PriceAmount,
@@ -73,7 +73,7 @@ func (q *CartQuery) FindByCustomerID(ctx context.Context, customerID string) (*q
 		total += subtotal
 	}
 
-	return &query.CartDTO{
+	return &cartusecase.CartDTO{
 		CustomerID:  customerID,
 		Items:       items,
 		TotalAmount: total,

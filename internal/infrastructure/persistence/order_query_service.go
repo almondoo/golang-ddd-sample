@@ -7,11 +7,11 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/almondoo/golang-ddd-sample/internal/application/order/query"
+	orderusecase "github.com/almondoo/golang-ddd-sample/internal/application/usecase/order"
 	"github.com/almondoo/golang-ddd-sample/internal/domain/shared"
 )
 
-// OrderQuery は query.OrderQueryService の GORM 実装である。
+// OrderQuery は orderusecase.OrderQueryService の GORM 実装である。
 //
 // order.Repository を経由せず gorm.DB へ直接クエリを発行しているのは、
 // catalog_query_service.go / cart_query_service.go に書いた通り、
@@ -32,11 +32,11 @@ func NewOrderQuery(db *gorm.DB) *OrderQuery {
 	return &OrderQuery{db: db}
 }
 
-// コンパイル時に OrderQuery が query.OrderQueryService を満たすことを保証する。
-var _ query.OrderQueryService = (*OrderQuery)(nil)
+// コンパイル時に OrderQuery が orderusecase.OrderQueryService を満たすことを保証する。
+var _ orderusecase.OrderQueryService = (*OrderQuery)(nil)
 
 // FindByID は id に対応する注文を、明細を含む DTO として返す。
-func (q *OrderQuery) FindByID(ctx context.Context, id string) (*query.OrderDTO, error) {
+func (q *OrderQuery) FindByID(ctx context.Context, id string) (*orderusecase.OrderDTO, error) {
 	db := DBFromContext(ctx, q.db)
 
 	var model OrderModel
@@ -52,11 +52,11 @@ func (q *OrderQuery) FindByID(ctx context.Context, id string) (*query.OrderDTO, 
 		return nil, err
 	}
 
-	items := make([]query.OrderItemDTO, 0, len(itemModels))
+	items := make([]orderusecase.OrderItemDTO, 0, len(itemModels))
 	var total int64
 	for _, im := range itemModels {
 		subtotal := im.UnitPriceAmount * int64(im.Quantity)
-		items = append(items, query.OrderItemDTO{
+		items = append(items, orderusecase.OrderItemDTO{
 			ProductID:       im.ProductID,
 			ProductName:     im.ProductName,
 			UnitPriceAmount: im.UnitPriceAmount,
@@ -66,12 +66,20 @@ func (q *OrderQuery) FindByID(ctx context.Context, id string) (*query.OrderDTO, 
 		total += subtotal
 	}
 
-	return &query.OrderDTO{
-		ID:          model.ID,
-		CustomerID:  model.CustomerID,
-		Status:      model.Status,
-		TotalAmount: total,
-		PlacedAt:    model.PlacedAt,
-		Items:       items,
+	// 支払うべき金額 = 合計金額 - 割引額。クーポン未適用（CouponCode が
+	// 空文字列）の場合は DiscountAmount が常に 0 なので、payable は
+	// total とそのまま一致する。
+	payable := total - model.DiscountAmount
+
+	return &orderusecase.OrderDTO{
+		ID:             model.ID,
+		CustomerID:     model.CustomerID,
+		Status:         model.Status,
+		TotalAmount:    total,
+		PlacedAt:       model.PlacedAt,
+		Items:          items,
+		CouponCode:     model.CouponCode,
+		DiscountAmount: model.DiscountAmount,
+		PayableAmount:  payable,
 	}, nil
 }

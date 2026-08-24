@@ -3,8 +3,7 @@ package controller
 import (
 	"net/http"
 
-	"github.com/almondoo/golang-ddd-sample/internal/application/catalog/command"
-	"github.com/almondoo/golang-ddd-sample/internal/application/catalog/query"
+	catalogusecase "github.com/almondoo/golang-ddd-sample/internal/application/usecase/catalog"
 )
 
 // CatalogController は catalog コンテキストの HTTP エンドポイント群をまとめた
@@ -17,18 +16,18 @@ import (
 // 限定している。controller は HTTP を usecase の入出力へ変換して呼び出す
 // だけで、業務ルールを持たない。
 type CatalogController struct {
-	registerProduct *command.RegisterProductUseCase
-	changePrice     *command.ChangePriceUseCase
-	listProducts    *query.ListProductsUseCase
-	getProduct      *query.GetProductUseCase
+	registerProduct *catalogusecase.RegisterProductUseCase
+	changePrice     *catalogusecase.ChangePriceUseCase
+	listProducts    *catalogusecase.ListProductsUseCase
+	getProduct      *catalogusecase.GetProductUseCase
 }
 
 // NewCatalogController は CatalogController を生成する。
 func NewCatalogController(
-	registerProduct *command.RegisterProductUseCase,
-	changePrice *command.ChangePriceUseCase,
-	listProducts *query.ListProductsUseCase,
-	getProduct *query.GetProductUseCase,
+	registerProduct *catalogusecase.RegisterProductUseCase,
+	changePrice *catalogusecase.ChangePriceUseCase,
+	listProducts *catalogusecase.ListProductsUseCase,
+	getProduct *catalogusecase.GetProductUseCase,
 ) *CatalogController {
 	return &CatalogController{
 		registerProduct: registerProduct,
@@ -70,7 +69,7 @@ func (c *CatalogController) handleRegisterProduct(w http.ResponseWriter, r *http
 		return
 	}
 
-	out, err := c.registerProduct.Execute(r.Context(), command.RegisterProductInput{
+	out, err := c.registerProduct.Execute(r.Context(), catalogusecase.RegisterProductInput{
 		Name:        req.Name,
 		Description: req.Description,
 		PriceAmount: req.PriceAmount,
@@ -85,7 +84,7 @@ func (c *CatalogController) handleRegisterProduct(w http.ResponseWriter, r *http
 
 // listProductsResponse は商品一覧エンドポイントのレスポンスボディである。
 type listProductsResponse struct {
-	Products []query.ProductDTO `json:"products"`
+	Products []catalogusecase.ProductDTO `json:"products"`
 }
 
 func (c *CatalogController) handleListProducts(w http.ResponseWriter, r *http.Request) {
@@ -124,7 +123,7 @@ func (c *CatalogController) handleChangePrice(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	err := c.changePrice.Execute(r.Context(), command.ChangePriceInput{
+	err := c.changePrice.Execute(r.Context(), catalogusecase.ChangePriceInput{
 		ProductID:      id,
 		NewPriceAmount: req.NewPriceAmount,
 	})

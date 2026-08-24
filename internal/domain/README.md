@@ -63,16 +63,38 @@ GORM 用の永続化モデル（`internal/infrastructure` 配下に置く）を�
   インフラストラクチャ層が担う（依存性逆転の原則）。
 - **ドメインサービス**: 単一のエンティティ・値オブジェクトに責務を置けない
   ビジネスロジック（複数の集約をまたぐ計算等）を置く。
-- **ドメインイベント**: `internal/domain/shared` の `DomainEvent` を実装し、
-  「何が起きたか」を表現する。
+  ただし本サンプルには実例がない。各コンテキスト（catalog / cart / order
+  など）は集約を 1 つずつしか持たず、同一コンテキスト内の複数集約を
+  またぐロジックが存在しないため未使用である。コンテキストをまたぐ
+  調整（`PlaceOrderUseCase` が cart・catalog・inventory・coupon を
+  横断する等）はドメインサービスではなく application 層の責務であり、
+  これは置き違いではなく正しい配置である。ドメインサービスがどのような
+  場面で必要になるかは [`docs/ddd/domain-service.md`](../../docs/ddd/domain-service.md)
+  を参照。
 
 ## internal/domain/shared について
 
 `shared` パッケージは、特定のコンテキスト（catalog / cart / order）に
 属さない、複数のコンテキストで再利用される「共有カーネル（Shared Kernel）」を
 置く場所である。`Money` のような汎用的な値オブジェクトや、
-`DomainEvent` / `EventPublisher` / `AggregateBase` といった DDD の
-戦術的パターンを実現するための土台をここに置く。
+`ErrNotFound` / `DomainRuleError` といった共通エラー種別をここに置く。
 
 共有カーネルは便利だが濫用すると各コンテキストの独立性を損なうため、
 「本当にどのコンテキストでも同じ意味を持つ、安定した概念」だけを置くべきである。
+
+`ProductID` / `CustomerID` / `OrderID` のような ID 型は共有カーネルには
+置かず、各コンテキストがそれぞれ独自に重複定義している（詳細は
+「catalog への ID のみの参照」等、各コンテキストの README を参照）。
+この重複には、生成時の空文字チェックのようなバリデーションロジックが
+11 ファイルにコピーされるという保守コストも伴う。ID 型の対照表は
+docs/context-map.md を参照（同一 UUID 空間を共有する型どうしの対応が
+一覧できる）。
+
+なお、生成コンストラクタ（例: `NewCart` や `shared.NewID()`）はドメイン層
+の中で ID（UUID）を生成しており、これはドメイン層内の非決定性である。
+`coupon.Coupon.IsExpired` が「時刻もまた入力である」として `time.Now()` を
+ドメイン層で呼ばずアプリケーション層から注入させているのと同種の問題に
+見えるが、本サンプルでは ID 生成は許容する判断をした。時刻と異なり、
+テストの検証内容が生成された ID の値そのものに依存する場面がないため
+（`ReconstructOrder` 等で既知の ID を注入すればよく、非決定性がテストの
+再現性を損なわない）である。

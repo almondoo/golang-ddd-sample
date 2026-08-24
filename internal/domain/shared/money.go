@@ -58,6 +58,22 @@ func (m Money) Add(other Money) (Money, error) {
 	return NewMoney(m.amount+other.amount, m.currency)
 }
 
+// Subtract は 2 つの Money を減算した新しい Money を返す（m - other）。
+// Add と同様、通貨単位が異なる Money 同士の減算は意味を持たないため
+// ドメインルール違反として扱う。
+// さらに Money は「負の金額を持たない」という不変条件を NewMoney で
+// 常に守っているため、減算結果が負になる場合（割引額が元の金額を
+// 超える等）もドメインルール違反として拒否する。
+func (m Money) Subtract(other Money) (Money, error) {
+	if m.currency != other.currency {
+		return Money{}, NewDomainRuleError("money: currency mismatch: %s vs %s", m.currency, other.currency)
+	}
+	if other.amount > m.amount {
+		return Money{}, NewDomainRuleError("money: subtraction would result in a negative amount: %d - %d", m.amount, other.amount)
+	}
+	return NewMoney(m.amount-other.amount, m.currency)
+}
+
 // Multiply は Money を n 倍した新しい Money を返す。
 // 例えばカート内の「単価 × 数量」の計算に使うことを想定している。
 func (m Money) Multiply(n int) (Money, error) {

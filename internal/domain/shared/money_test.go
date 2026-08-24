@@ -46,6 +46,55 @@ func TestMoney_Add_CurrencyMismatch(t *testing.T) {
 	}
 }
 
+func TestMoney_Subtract(t *testing.T) {
+	a, err := NewMoney(300, JPY)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	b, err := NewMoney(100, JPY)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	diff, err := a.Subtract(b)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if diff.Amount() != 200 {
+		t.Fatalf("expected amount 200, got %d", diff.Amount())
+	}
+}
+
+func TestMoney_Subtract_CurrencyMismatch(t *testing.T) {
+	jpy, err := NewMoney(100, JPY)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	usd, err := NewMoney(100, Currency("USD"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, err := jpy.Subtract(usd); err == nil {
+		t.Fatal("expected error for currency mismatch, got nil")
+	}
+}
+
+func TestMoney_Subtract_NegativeResultIsRejected(t *testing.T) {
+	a, err := NewMoney(100, JPY)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	b, err := NewMoney(200, JPY)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, err := a.Subtract(b); err == nil {
+		t.Fatal("expected error for negative result, got nil")
+	}
+}
+
 func TestMoney_Multiply(t *testing.T) {
 	m, err := NewMoney(100, JPY)
 	if err != nil {
