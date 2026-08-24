@@ -70,7 +70,7 @@ sequenceDiagram
     PR-->>UC: Product(現在価格)
     UC->>SR: FindByProductID → Reserve → Save × 明細ぶん — 在庫引当
     SR-->>UC: 引当済み Stock
-    UC->>O: NewOrder(customerID, items)
+    UC->>O: NewOrder(customerID, items, now)
     Note over O: 不変条件を検証
     O-->>UC: Order
     opt couponCode が指定されている場合
@@ -94,7 +94,9 @@ sequenceDiagram
 - カートのクリアはユースケース(application 層)から `cart.Repository` への直接呼び出しであり、`Order` の `Save` と同一トランザクション内で行われます。「注文は確定したがカートが空にならない」という不整合が起きない一方、order→cart という依存(結合度の上昇)を受け入れる判断です。
 - コンテキストをまたぐ反応が増えてきたら(例: 注文確定時にポイント付与も行いたい等)、ドメインイベント + 購読による疎結合な連携へ発展させるのが定石です。
 
-なお、発送(`POST /orders/{id}/ship`)も同様に複数コンテキストにまたがる操作です。`ShipOrderUseCase` は `Order.Ship()` で状態を進めた後、顧客のデフォルト住所から `shipping.Shipment` を生成して発送指示と同時に出荷済みにし、注文明細ごとに `inventory.Stock.ConsumeReserved` で引当済みの在庫を実際に払い出す、という「Shipment 生成 + 在庫消込」を 1 トランザクションでまとめて行います。
+なお、発送(`POST /orders/{id}/ship`)も同様に複数コンテキストにまたがる操作です。`ShipOrderUseCase` は `Order.Ship()` で状態を進めた後、顧客のデフォルト住所から `shipping.Shipment` を生成して発送指示と同時に出荷済みにし、注文明細ごとに `inventory.Stock.ConsumeReserved` で引当済みの在庫を実際に払い出す、という「Shipment 生成 + 在庫消込」を 1 トランザクションでまとめて行います。レスポンスは 200 OK とし、生成した `Shipment` の ID を `{"shipmentId": ...}` として返します(クライアントが以降 Shipment 単位の API に到達できるようにするため)。
+
+また、取り消し(`POST /orders/{id}/cancel`)も複数コンテキストにまたがります。`CancelOrderUseCase` は `Order.Cancel()` で状態を進めた後、注文明細ごとに `inventory.Stock.Release` で引当を解除し、さらにクーポンが適用されていた注文であれば `coupon.Coupon.Refund` で利用実績を戻します。在庫の引当解除だけでなくクーポンの利用実績も戻すことで、取り消された注文のために在庫やクーポンの利用回数上限が永久に消費されたままにならないようにしています。
 
 ## query の実行順序 — 商品一覧(GET /products)
 
@@ -104,7 +106,7 @@ query はドメイン層を通りません。クエリサービス(application �
 sequenceDiagram
     autonumber
     actor C as クライアント
-    participant H as ProductController<br>(presentation)
+    participant H as CatalogController<br>(presentation)
     participant Q as ListProductsUseCase<br>(application/usecase/catalog)
     participant QS as ProductQueryService<br>(IFはapplication/実装はinfra)
     participant DB as PostgreSQL

@@ -19,8 +19,8 @@ flowchart TB
     subgraph Infrastructure["infrastructure/persistence(最外層)"]
         Impl["OrderRepository(GORM実装)"]
     end
-    UC -->|依存(ポートを呼ぶ)| IF
-    Impl -->|依存(インターフェースを実装)| IF
+    UC -->|"依存(ポートを呼ぶ)"| IF
+    Impl -->|"依存(インターフェースを実装)"| IF
     UC -.->|実行時はDIで注入されたImplを呼ぶ| Impl
 ```
 

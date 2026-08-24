@@ -455,6 +455,19 @@ func TestPlaceOrderUseCase_Execute_Success(t *testing.T) {
 		if !savedCart.IsEmpty() {
 			t.Fatalf("expected cart to be cleared, got %d items", len(savedCart.Items()))
 		}
+
+		// フェイクがポインタを共有するため、上記の状態検証（Reserved()や
+		// IsEmpty()）だけでは「Save が実際に呼ばれたこと」を証明できない
+		// （map に格納された同一ポインタを直接書き換えているだけでも
+		// 同じ結果になってしまう）。呼び出し記録も併せて検証する。
+		// 明細ごとに1回、在庫の Save が呼ばれるはず（商品A・商品Bで2回）。
+		if len(f.inventoryRepo.saved) != 2 {
+			t.Fatalf("inventoryRepo.Save called %d times, want 2", len(f.inventoryRepo.saved))
+		}
+		// カートの Save は Clear() 後に1回だけ呼ばれるはず。
+		if len(f.cartRepo.saved) != 1 {
+			t.Fatalf("cartRepo.Save called %d times, want 1", len(f.cartRepo.saved))
+		}
 	})
 
 	t.Run("valid coupon discounts the payable amount and is marked as used", func(t *testing.T) {
@@ -504,6 +517,12 @@ func TestPlaceOrderUseCase_Execute_Success(t *testing.T) {
 		}
 		if savedCoupon.UsedCount() != 1 {
 			t.Fatalf("UsedCount() = %d, want 1", savedCoupon.UsedCount())
+		}
+
+		// 状態検証（UsedCount()）だけでは Save が実際に呼ばれたことを
+		// 証明できないため、呼び出し記録も併せて検証する。
+		if len(f.couponRepo.saved) != 1 {
+			t.Fatalf("couponRepo.Save called %d times, want 1", len(f.couponRepo.saved))
 		}
 	})
 }

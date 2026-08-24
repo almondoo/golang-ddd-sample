@@ -56,6 +56,13 @@ func (u *IssueCouponUseCase) Execute(ctx context.Context, in IssueCouponInput) (
 		return IssueCouponOutput{}, err
 	}
 
+	// ゼロ値や過去日時のクーポンは発行時点で使用不能なので弾く。
+	// 時刻の取得は usecase 層の責務である（ドメイン層に time.Now() を
+	// 持ち込まない方針は Coupon.IsExpired のコメントを参照）。
+	if !in.ExpiresAt.After(time.Now()) {
+		return IssueCouponOutput{}, shared.NewDomainRuleError("coupon: expiresAt must be in the future")
+	}
+
 	// 割引方式ごとに異なる専用コンストラクタへ分岐する。「amount 型なのに
 	// ratePercent が設定されている」といった不正な組み合わせをそもそも
 	// 型として作れないようにするための、ドメイン層の設計をそのまま踏襲する。

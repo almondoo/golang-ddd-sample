@@ -14,7 +14,7 @@
 | [domain-event.md](domain-event.md) | ドメインイベント。本リポジトリでは不採用とその経緯 | 採用時 vs 現状の比較シーケンス図 |
 | [bounded-context.md](bounded-context.md) | 境界づけられたコンテキスト。7コンテキスト+shared | コンテキスト概観flowchart |
 | [shared-kernel.md](shared-kernel.md) | 共有カーネル。小さく保つ原則とinternal/domain/shared | 共有カーネル参照関係のflowchart |
-| [ubiquitous-language.md](ubiquitous-language.md) | ユビキタス言語。用語集未整備・エラーメッセージの言語混在 | ID型対照表 |
+| [ubiquitous-language.md](ubiquitous-language.md) | ユビキタス言語。ID型対照表を整備済み・エラーメッセージは英語に統一済み(修正の経緯つき) | ID型対照表 |
 | [cqrs.md](cqrs.md) | CQRS(軽量版)。commandはドメイン経由、queryはDTO直行 | 2経路(command/query)のflowchart |
 | [onion-architecture.md](onion-architecture.md) | オニオンアーキテクチャと依存性逆転。4層と依存方向 | 4層依存関係のflowchart |
 

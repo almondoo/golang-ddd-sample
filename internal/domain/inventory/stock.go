@@ -87,8 +87,14 @@ func (s *Stock) SetQuantity(n int) error {
 //
 // 在庫引当は「reserved <= quantity」という不変条件を集約自身が守る、
 // という設計の核心部分である。Available()（= quantity - reserved）を
-// 超える引当は許可しない。これにより、複数の注文が同時に確定しても
-// 実在庫を超えて引き当ててしまう事態を、集約の境界内で防ぐ。
+// 超える引当は許可しない。
+//
+// ただしこの不変条件が守るのは「1つの Stock インスタンスに対する操作」の
+// 整合性まで。並行するトランザクション同士の競合（同じ在庫を同時に読んで
+// 同時に引き当てる lost update）は集約だけでは防げず、実運用では
+// SELECT ... FOR UPDATE（gorm の clause.Locking）や楽観ロック（version
+// カラム）が必要になる。本サンプルはロック制御を実装していないため、
+// 複数の注文が同時に確定すると実在庫を超えて引き当ててしまう可能性がある。
 func (s *Stock) Reserve(n int) error {
 	if n < 1 {
 		return shared.NewDomainRuleError("inventory: reserve quantity must be at least 1, got %d", n)

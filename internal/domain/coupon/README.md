@@ -39,17 +39,39 @@
 は完全に決定的（deterministic）に振る舞い、任意の時刻を起点にしたテストを
 容易に書けるようになる（`coupon_test.go` の `TestCoupon_Use` を参照）。
 
+## 発行時の有効期限検証
+
+`IssueCouponUseCase`（[issue_coupon.go](../../application/usecase/coupon/issue_coupon.go)）
+は、発行しようとしているクーポンの `ExpiresAt` が現在時刻より未来であることを
+検証し、過去日時・現在時刻以前の `ExpiresAt` を拒否する。発行した瞬間から
+使用不能なクーポンを作れてしまうこと自体が業務的に無意味なので、`Coupon`
+集約のコンストラクタではなく、時刻を扱えるアプリケーション層で検証している
+（ドメイン層に `time.Now()` を持ち込まない方針は前節「なぜ now を引数で渡すのか」
+を参照）。
+
 ## 注文フローとの関係
 
 本コンテキストはクーポンの発行・参照（`IssueCouponUseCase` /
 `GetCouponUseCase`）のみを提供し、クーポンを実際に注文へ適用する処理は
-含まない。クーポンの適用（`Use` の呼び出しと割引額の計算）は、注文確定
-（`order` コンテキストの place-order ユースケース）側が `coupon.Repository`
-を通じてクーポンを取得し、`DiscountFor` で割引額を求め、`Use` で消費を記録
-する、という形で行われる想定である。
+含まない。クーポンの適用（`Use` の呼び出しと割引額の計算）は、注文確定の
+[`PlaceOrderUseCase`](../../application/usecase/order/place_order.go)
+が `coupon.Repository` を通じてクーポンを取得し、`DiscountFor` で割引額を
+求め、`Use` で消費を記録する、という形で行われる。
 
 これは cart コンテキストが catalog の実在確認を注文確定まで遅延させている
 のと同じ設計判断である。coupon コンテキストは「クーポンという概念そのもの
 の整合性」だけに責任を持ち、「クーポンをいつ・どの注文に適用するか」という
 決定は注文コンテキスト側に委ねることで、コンテキスト間の結合を弱く保って
 いる。
+
+## キャンセル時の利用実績の返却（Refund）
+
+注文が取り消されると、その注文のために消費されたクーポンの利用実績も
+戻さなければならない。さもないと、取り消されて「もう存在しない注文」の
+ために利用回数上限に達したクーポンが永久に使えなくなってしまう。この
+ため `Coupon` は `Use` と対になる `Refund` メソッドを持ち、
+[`CancelOrderUseCase`](../../application/usecase/order/cancel_order.go)
+が、取り消された注文にクーポンが適用されていた場合に呼び出す。`Refund` は
+`usedCount` が 0 の状態（一度も消費していない）で呼ばれることをドメイン
+ルール違反として拒否し、在庫の `Release`（`inventory` コンテキスト）と
+対になる操作として設計されている。

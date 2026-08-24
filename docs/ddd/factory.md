@@ -36,6 +36,8 @@ flowchart LR
 | Order / OrderItem | [`NewOrder`](../../internal/domain/order/order.go) | `ReconstructOrder`([order_item.go](../../internal/domain/order/order_item.go)の`ReconstructOrderItem`) |
 | Customer / Address | [`NewCustomer`](../../internal/domain/customer/customer.go) | `ReconstructCustomer`([address.go](../../internal/domain/customer/address.go)の`ReconstructAddress`) |
 | Coupon | [`NewAmountCoupon`/`NewRateCoupon`](../../internal/domain/coupon/coupon.go) | `ReconstructCoupon` |
+| Stock | [`NewStock`](../../internal/domain/inventory/stock.go) | `ReconstructStock` |
+| Shipment | [`NewShipment`](../../internal/domain/shipping/shipment.go) | `ReconstructShipment` |
 
 `ReconstructProduct`のコメントが理由を端的に述べています。「DBから読み出す値は過去にNewProductのバリデーションを通過して保存されたものであり、再度同じチェックを課す必要はない(むしろ将来バリデーションルールを厳しく変更した場合に、過去のデータが読み込めなくなるという事故を防げる)」。`Reconstruct*`系はすべてリポジトリ実装(infrastructure層)からのみ呼ばれる想定です。
 

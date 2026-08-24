@@ -145,6 +145,36 @@ func TestMoney_Equals(t *testing.T) {
 	}
 }
 
+func TestNewMoney_MaxAmountIsAccepted(t *testing.T) {
+	if _, err := NewMoney(maxAmount, JPY); err != nil {
+		t.Fatalf("unexpected error at maxAmount: %v", err)
+	}
+}
+
+func TestNewMoney_ExceedingMaxAmountIsRejected(t *testing.T) {
+	if _, err := NewMoney(maxAmount+1, JPY); err == nil {
+		t.Fatal("expected error for amount exceeding maxAmount, got nil")
+	}
+}
+
+func TestMoney_Multiply_ExceedingMaxAmountIsRejected(t *testing.T) {
+	// maxAmount(1兆円) × 99 = 9.9e13 は int64 の範囲には収まる
+	// （オーバーフローはしない）ため、Multiply 内のオーバーフロー検査
+	// （dead-man protection、公開 API 経由では到達しない）自体は発火しない。
+	// しかしその計算結果は maxAmount を超えるため、Multiply の最後に呼ばれる
+	// NewMoney の上限チェックによって正しく拒否される。この経路は
+	// 「単価 × 数量」が現実的にあり得ない金額になるケースを、乗算そのものが
+	// 安全でも上限チェックで確実に弾けることを示している。
+	m, err := NewMoney(maxAmount, JPY)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, err := m.Multiply(99); err == nil {
+		t.Fatal("expected error for maxAmount * 99 exceeding maxAmount, got nil")
+	}
+}
+
 func TestIsDomainRuleError(t *testing.T) {
 	_, err := NewMoney(-1, JPY)
 	if !IsDomainRuleError(err) {

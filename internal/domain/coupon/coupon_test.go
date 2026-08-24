@@ -200,6 +200,53 @@ func TestCoupon_Use(t *testing.T) {
 	})
 }
 
+// TestCoupon_Refund はクーポン消費の取り消し（Refund）の 2 パターン
+// （正常な払い戻し／未消費のクーポンへの払い戻し拒否）を検証する。
+func TestCoupon_Refund(t *testing.T) {
+	code := newTestCode(t)
+	amount, _ := shared.NewMoney(500, shared.JPY)
+	now := time.Now()
+	future := now.Add(24 * time.Hour)
+
+	t.Run("refund after use decrements used count and makes the coupon reusable", func(t *testing.T) {
+		c, err := NewAmountCoupon(code, amount, future, 1)
+		if err != nil {
+			t.Fatalf("NewAmountCoupon() unexpected error: %v", err)
+		}
+		if err := c.Use(now); err != nil {
+			t.Fatalf("Use() unexpected error: %v", err)
+		}
+		if c.UsedCount() != 1 {
+			t.Fatalf("UsedCount() = %d, want 1", c.UsedCount())
+		}
+
+		if err := c.Refund(); err != nil {
+			t.Fatalf("Refund() unexpected error: %v", err)
+		}
+		if c.UsedCount() != 0 {
+			t.Fatalf("UsedCount() = %d, want 0", c.UsedCount())
+		}
+
+		// usageLimit=1 のクーポンでも、Refund 後は再度 Use できるはず。
+		if err := c.Use(now); err != nil {
+			t.Fatalf("Use() after Refund unexpected error: %v", err)
+		}
+	})
+
+	t.Run("refund at zero used count is rejected", func(t *testing.T) {
+		c, err := NewAmountCoupon(code, amount, future, 1)
+		if err != nil {
+			t.Fatalf("NewAmountCoupon() unexpected error: %v", err)
+		}
+
+		if err := c.Refund(); err == nil {
+			t.Fatal("Refund() expected error for zero used count, got nil")
+		} else if !shared.IsDomainRuleError(err) {
+			t.Errorf("Refund() error = %v, want DomainRuleError", err)
+		}
+	})
+}
+
 // TestCoupon_DiscountFor_Amount は amount 型クーポンの割引計算が
 // 「割引額は合計金額を超えない」というルールを守ることを検証する。
 func TestCoupon_DiscountFor_Amount(t *testing.T) {

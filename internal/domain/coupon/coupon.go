@@ -178,6 +178,21 @@ func (c *Coupon) Use(now time.Time) error {
 	return nil
 }
 
+// Refund はクーポンの消費を 1 回分取り消す（注文キャンセル時に呼ばれる
+// ことを想定）。注文キャンセルで利用実績を戻す。在庫の Release と対になる
+// 操作である。
+//
+// usedCount が 0 の状態で Refund を呼ぶことは「一度も消費していないのに
+// 取り消そうとする」という想定外の状態であり、ドメインルール違反として
+// 拒否する。
+func (c *Coupon) Refund() error {
+	if c.usedCount <= 0 {
+		return shared.NewDomainRuleError("coupon: coupon %s has no usage to refund", c.code.String())
+	}
+	c.usedCount--
+	return nil
+}
+
 // DiscountFor は注文合計金額 total に対する割引額を計算する。
 //
 // amount 型では「割引額は合計金額を超えない」という業務ルールを守るため、

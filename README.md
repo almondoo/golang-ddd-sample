@@ -40,7 +40,11 @@ go run github.com/almondoo/wire/cmd/wire ./cmd/api
 │   ├── wire.go                  # DI の設計図(プロバイダの宣言)
 │   └── wire_gen.go              # wire が生成した組み立てコード
 ├── docs/
-│   └── execution-flow.md        # リクエスト実行順序の図解
+│   ├── context-map.md           # コンテキストマップ(戦略的設計)、ID 型対照表
+│   ├── execution-flow.md        # リクエスト実行順序の図解
+│   ├── ddd-research.md          # DDD 原則の出典検証済みリサーチ
+│   ├── ddd/                     # DDD の構成要素を1要素=1ファイルで解説
+│   └── specs/                   # DDD 原則との突き合わせ監査結果・改善スペック
 ├── internal/
 │   ├── domain/                  # ドメイン層(最内層・外部依存ゼロ)
 │   │   ├── shared/              # 共有カーネル: Money、共通エラーなど
@@ -89,8 +93,8 @@ go run github.com/almondoo/wire/cmd/wire ./cmd/api
 | `POST /orders` | カートの内容から注文を確定する(`couponCode` は任意) | command |
 | `GET /orders/{id}` | 注文詳細を取得する | query |
 | `POST /orders/{id}/pay` | 支払いを記録する(状態遷移) | command |
-| `POST /orders/{id}/ship` | 発送を記録する(状態遷移) | command |
-| `POST /orders/{id}/cancel` | 注文をキャンセルする | command |
+| `POST /orders/{id}/ship` | 発送を記録する(状態遷移)。レスポンスは `200 {"shipmentId": "..."}` | command |
+| `POST /orders/{id}/cancel` | 注文をキャンセルする(在庫の引当解除・クーポン利用実績の返却を含む) | command |
 | `POST /customers` | 顧客を登録する | command |
 | `GET /customers/{id}` | 顧客詳細(住所を含む)を取得する | query |
 | `POST /customers/{id}/addresses` | 顧客に配送先住所を追加する | command |

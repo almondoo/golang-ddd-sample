@@ -107,15 +107,24 @@ func (c *OrderController) handlePayOrder(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// shipOrderResponse は発送エンドポイントのレスポンスボディである。
+// 生成した Shipment の ID を返す。生成したリソースの ID を返さないと、
+// クライアントは配達完了 API に到達できない（PlaceOrder が orderId を
+// 返すのと同じ理由）。
+type shipOrderResponse struct {
+	ShipmentID string `json:"shipmentId"`
+}
+
 func (c *OrderController) handleShipOrder(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	if err := c.shipOrder.Execute(r.Context(), orderusecase.ShipOrderInput{OrderID: id}); err != nil {
+	out, err := c.shipOrder.Execute(r.Context(), orderusecase.ShipOrderInput{OrderID: id})
+	if err != nil {
 		WriteError(w, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	WriteJSON(w, http.StatusOK, shipOrderResponse{ShipmentID: out.ShipmentID})
 }
 
 func (c *OrderController) handleCancelOrder(w http.ResponseWriter, r *http.Request) {

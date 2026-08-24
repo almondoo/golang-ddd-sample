@@ -12,13 +12,14 @@
 flowchart LR
     In["amount int64, currency Currency"] --> Gate{"NewMoney(amount, currency)"}
     Gate -->|amount < 0| Reject["エラー: DomainRuleError(負値を拒否)"]
-    Gate -->|amount >= 0| Money["Money{amount, currency}(不変・非公開フィールド)"]
+    Gate -->|amount > maxAmount| Reject2["エラー: DomainRuleError(上限超過を拒否)"]
+    Gate -->|0 <= amount <= maxAmount| Money["Money{amount, currency}(不変・非公開フィールド)"]
     Money --> Add["Add/Subtract/Multiply(新しい Money を返す)"]
 ```
 
 ## このリポジトリでの実例
 
-**shared.Money**([money.go](../../internal/domain/shared/money.go))が代表例です。`NewMoney`は負の金額を拒否し、`Add`/`Subtract`は通貨単位が異なる同士の演算をドメインルール違反として拒否します。フィールドは非公開で、`Add`/`Subtract`/`Multiply`はすべて新しい`Money`を返し、レシーバ自身は書き換えません。
+**shared.Money**([money.go](../../internal/domain/shared/money.go))が代表例です。`NewMoney`は負の金額を拒否するだけでなく、`maxAmount`(1兆円)という上限も設けています。これは演算(特に`Multiply`)のオーバーフローを構造的に排除するためで、数量・明細数の上限と組み合わせても`int64`の範囲を超えない金額にドメインを閉じ込めています。`Add`/`Subtract`は通貨単位が異なる同士の演算をドメインルール違反として拒否します。フィールドは非公開で、`Add`/`Subtract`/`Multiply`はすべて新しい`Money`を返し、レシーバ自身は書き換えません。
 
 **coupon.CouponCode**([coupon_code.go](../../internal/domain/coupon/coupon_code.go))は「4〜20文字の大文字英数字とハイフンのみ」という形式ルールを正規表現でコンストラクタに閉じ込めており、一度`CouponCode`型として生成できればそれ以降の呼び出し側は形式の再検証を意識せずに済みます。
 

@@ -13,7 +13,7 @@ flowchart TD
     Q1{"1つの集約(ルート+子)だけで判断できるか?"}
     Q1 -->|Yes| A["集約(ルート)のメソッドに置く<br>例: Customer.ChangeDefaultAddress"]
     Q1 -->|No| Q2{"同一コンテキスト内で複数集約をまたぐか?"}
-    Q2 -->|Yes(本リポジトリに実例なし)| B["ドメインサービス"]
+    Q2 -->|"Yes(本リポジトリに実例なし)"| B["ドメインサービス"]
     Q2 -->|No: コンテキストをまたぐ| C["アプリケーションサービス(usecase)<br>例: PlaceOrderUseCase"]
 ```
 

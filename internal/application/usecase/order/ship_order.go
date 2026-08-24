@@ -18,6 +18,14 @@ type ShipOrderInput struct {
 	OrderID string
 }
 
+// ShipOrderOutput は発送ユースケースの出力である。
+// 生成した Shipment の ID を返す。生成したリソースの ID を返さないと、
+// クライアントは配達完了 API（Shipment 単位のエンドポイント）に到達
+// できない。PlaceOrder が OrderID を返すのと同じ理由である。
+type ShipOrderOutput struct {
+	ShipmentID string
+}
+
 // ShipOrderUseCase は注文を発送済みにし、状態を paid から shipped へ
 // 遷移させるユースケースである。
 //
@@ -62,13 +70,14 @@ func NewShipOrderUseCase(
 //  3. shipping.Shipment を生成し、発送指示と同時に出荷済みにする
 //  4. 注文明細ごとに、注文確定時に引き当てた在庫を消込む（実在庫を減らす）
 //  5. 変更後の Order を保存する
-func (uc *ShipOrderUseCase) Execute(ctx context.Context, in ShipOrderInput) error {
+func (uc *ShipOrderUseCase) Execute(ctx context.Context, in ShipOrderInput) (ShipOrderOutput, error) {
 	orderID, err := domainorder.NewOrderID(in.OrderID)
 	if err != nil {
-		return err
+		return ShipOrderOutput{}, err
 	}
 
-	return uc.txManager.Do(ctx, func(ctx context.Context) error {
+	var output ShipOrderOutput
+	err = uc.txManager.Do(ctx, func(ctx context.Context) error {
 		o, err := uc.orderRepo.FindByID(ctx, orderID)
 		if err != nil {
 			return err
@@ -142,6 +151,15 @@ func (uc *ShipOrderUseCase) Execute(ctx context.Context, in ShipOrderInput) erro
 			}
 		}
 
-		return uc.orderRepo.Save(ctx, o)
+		if err := uc.orderRepo.Save(ctx, o); err != nil {
+			return err
+		}
+
+		output = ShipOrderOutput{ShipmentID: s.ID().String()}
+		return nil
 	})
+	if err != nil {
+		return ShipOrderOutput{}, err
+	}
+	return output, nil
 }

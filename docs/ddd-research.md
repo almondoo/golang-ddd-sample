@@ -11,29 +11,29 @@
 
 **ルール1: 真の不変条件を整合性境界の中でモデリングする。** トランザクションで守るべき不変条件を持つ範囲だけが集約になります。
 
-> "And a properly designed bounded context modifies only one aggregate instance per transaction in all cases." (Part I, p.3)
+> "And a properly designed bounded context modifies only one aggregate instance per transaction in all cases." (Part I, p.4)
 
 いわゆる「1トランザクション=1集約」の原文です。ただし Vernon 自身が同じページで、これは絶対則ではなく目標だと明言しています。
 
-> "Limiting the modification of one aggregate instance per transaction may sound overly strict. However, it is a rule of thumb and should be the goal in most cases." (Part I, p.3)
+> "Limiting the modification of one aggregate instance per transaction may sound overly strict. However, it is a rule of thumb and should be the goal in most cases." (Part I, p.4)
 
-**ルール2: 集約は小さく設計する。** 大きなクラスタ集約は性能・スケールともに破綻します。実務статистикとして、
+**ルール2: 集約は小さく設計する。** 大きなクラスタ集約は性能・スケールともに破綻します。実務統計として、
 
 > "Niclas [Hedhman] reported that his team was able to design approximately 70% of all aggregates with just a root entity containing some value-typed properties. The remaining 30% had just two to three total entities." (Part I, p.5)
 
 **ルール3: 他の集約は ID で参照する。**
 
-> "Prefer references to external aggregates only by their globally unique identity, not by holding a direct object reference (or 'pointer')." (Part II, p.7)
+> "Prefer references to external aggregates only by their globally unique identity, not by holding a direct object reference (or 'pointer')." (Part II, p.8)
 
 **ルール4: 境界の外は結果整合性を使う。**
 
-> "Thus, if executing a command on one aggregate instance requires that additional business rules execute on one or more other aggregates, use eventual consistency." (Part II, p.8)
+> "Thus, if executing a command on one aggregate instance requires that additional business rules execute on one or more other aggregates, use eventual consistency." (Part II, p.9)
 
 Part II はさらに Evans の原典(DDD 本 p.128)を引いています: "Any rule that spans AGGREGATES will not be expected to be up-to-date at all times."
 
 ### ルールを破ってよい場合 — "Reasons To Break the Rules"
 
-Part II には逸脱を明示的に扱う節があります(節名逐語: **"Reasons To Break the Rules"**、p.9–10)。
+Part II には逸脱を明示的に扱う節があります(節名逐語: **"Reasons To Break the Rules"**、p.10–11)。
 
 > "An experienced DDD practitioner may at times decide to persist changes to multiple aggregate instances in a single transaction, but only with good reason. What might some reasons be? I discuss four reasons here."
 
@@ -112,7 +112,7 @@ CQRS はシステム全体ではなく特定の bounded context に限って適�
 
 ## 戦略的設計の最低限
 
-- [ddd-crew/ddd-starter-modelling-process](https://github.com/ddd-crew/ddd-starter-modelling-process) は Context Map(Connect ステップ)と Bounded Context Canvas(Define ステップ)を推奨ツールとして提示しています(実質確認)。なお「どんな規模でも有用」という文言は README には存在しません(検証で棄却)
+- [ddd-crew/ddd-starter-modelling-process](https://github.com/ddd-crew/ddd-starter-modelling-process) は Context Map(Organise / Decompose ステップ)と Bounded Context Canvas(Define ステップ)を推奨ツールとして提示しています(実質確認)。なお「どんな規模でも有用」という文言は README には存在しません(検証で棄却)
 - Microsoft の domain-analysis はユビキタス言語(コンテキストごとの共有語彙)を「中心」とし、コンテキストマップによる関係・統合点の文書化を基本成果物としています(実質確認)
 
 ## 検証で棄却・訂正された主張

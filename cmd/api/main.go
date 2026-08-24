@@ -49,10 +49,13 @@ func main() {
 	// 2. 依存関係の組み立ては wire が生成した initializeServer に委ねる。
 	//
 	// DB 接続の確立・スキーマの用意・各レイヤーのコンポーネント生成・
-	// イベント購読の配線・HTTP コントローラの mux 登録まで、すべてこの
-	// 1 呼び出しの中で行われる。実体は cmd/api/wire_gen.go にあり、
-	// その設計図は cmd/api/wire.go（wireinject タグ付き、通常ビルドからは
-	// 除外される）に書かれている。
+	// HTTP コントローラの mux 登録まで、すべてこの 1 呼び出しの中で
+	// 行われる（本サンプルにイベントバスは存在せず、コンテキストを
+	// またぐ処理はアプリケーション層からの直接呼び出しで行っている。
+	// 詳細は internal/application/usecase/order/place_order.go の
+	// コメントを参照）。実体は cmd/api/wire_gen.go にあり、その設計図は
+	// cmd/api/wire.go（wireinject タグ付き、通常ビルドからは除外される）
+	// に書かれている。
 	mux, err := initializeServer(dsn)
 	if err != nil {
 		slog.Error("failed to initialize server", "error", err)

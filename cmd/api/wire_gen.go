@@ -61,7 +61,7 @@ func initializeServer(dsn string) (*http.ServeMux, error) {
 	payOrderUseCase := order.NewPayOrderUseCase(orderRepository, txManager)
 	shipmentRepository := persistence.NewShipmentRepository(db)
 	shipOrderUseCase := order.NewShipOrderUseCase(orderRepository, customerRepository, shipmentRepository, stockRepository, txManager)
-	cancelOrderUseCase := order.NewCancelOrderUseCase(orderRepository, stockRepository, txManager)
+	cancelOrderUseCase := order.NewCancelOrderUseCase(orderRepository, stockRepository, couponRepository, txManager)
 	orderQuery := persistence.NewOrderQuery(db)
 	getOrderUseCase := order.NewGetOrderUseCase(orderQuery)
 	orderController := controller.NewOrderController(placeOrderUseCase, payOrderUseCase, shipOrderUseCase, cancelOrderUseCase, getOrderUseCase)

@@ -22,8 +22,8 @@ flowchart LR
     Order -->|application層オーケストレーション| Catalog
     Order -->|application層オーケストレーション| Inventory
     Order -->|application層オーケストレーション| Coupon
-    Order -->|application層オーケストレーション(発送時)| Shipping
-    Cart -.->|読み取り側 SQL JOIN(スキーマ結合)| Catalog
+    Order -->|"application層オーケストレーション(発送時)"| Shipping
+    Cart -.->|"読み取り側 SQL JOIN(スキーマ結合)"| Catalog
 
     Catalog --> Shared
     Cart --> Shared

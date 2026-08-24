@@ -12,7 +12,7 @@
 
 ```mermaid
 flowchart TB
-    Shared["shared(共有カーネル: Money / ErrNotFound / DomainRuleError / NewID)<br>約170行・小さく保つ"]
+    Shared["shared(共有カーネル: Money / ErrNotFound / DomainRuleError / NewID)<br>実装3ファイルで200行前後・小さく保つ"]
     Catalog["catalog"] --> Shared
     Cart["cart"] --> Shared
     Order["order"] --> Shared
@@ -26,7 +26,7 @@ flowchart TB
 
 ## このリポジトリでの実例
 
-`internal/domain/shared`がこれにあたります。中身は以下の3ファイルのみで、合計しても200行に満たない規模です。
+`internal/domain/shared`がこれにあたります。中身は以下の3ファイルのみで、実装コードだけなら合計200行前後の規模です(テストコードを含めるとより多くなりますが、上限チェックの追加などで多少増減しても「小さく保つ」規模感自体は変わりません)。
 
 - [money.go](../../internal/domain/shared/money.go) — `Money`値オブジェクト(負値・通貨不一致を拒否)
 - [errors.go](../../internal/domain/shared/errors.go) — `ErrNotFound` / `NewDomainRuleError`などの共通エラー種別

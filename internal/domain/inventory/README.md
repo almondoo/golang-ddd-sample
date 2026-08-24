@@ -34,13 +34,14 @@ inventory コンテキストは catalog パッケージを一切 import しな�
 `Stock` はそれ自体では注文を知らない（inventory コンテキストは order
 コンテキストに依存しない）。実際の在庫操作は、application 層の注文
 ユースケースが `inventory.Repository` を通じて `Stock` 集約を操作する形で
-行われる想定である。
+行われる。
 
-- 注文確定（place）: `Stock.Reserve(n)` を呼び、実在庫を減らさずに
-  「取り置き」を行う。
-- 注文キャンセル（cancel）: `Stock.Release(n)` を呼び、取り置きを解除する。
-  実在庫（quantity）は変えない。
-- 出荷（ship）: `Stock.ConsumeReserved(n)` を呼び、取り置きしていた分を
+- 注文確定（place）: [`PlaceOrderUseCase`](../../application/usecase/order/place_order.go)
+  が明細ごとに `Stock.Reserve(n)` を呼び、実在庫を減らさずに「取り置き」を行う。
+- 注文キャンセル（cancel）: [`CancelOrderUseCase`](../../application/usecase/order/cancel_order.go)
+  が明細ごとに `Stock.Release(n)` を呼び、取り置きを解除する。実在庫（quantity）は変えない。
+- 出荷（ship）: [`ShipOrderUseCase`](../../application/usecase/order/ship_order.go)
+  が明細ごとに `Stock.ConsumeReserved(n)` を呼び、取り置きしていた分を
   実際に払い出す。このとき `quantity` と `reserved` の両方が減る。
 
 このように「引当」と「消込・解放」を分離しているのは、注文確定と出荷の

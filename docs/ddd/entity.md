@@ -16,7 +16,7 @@ flowchart TB
     end
     subgraph CartItemFlow["cart.CartItem(準値オブジェクト・IDなし)"]
         direction LR
-        C1["CartItem{productID, quantity: 1}"] -->|数量変更は置き換え(マージ)| C2["CartItem{productID, quantity: 2}"]
+        C1["CartItem{productID, quantity: 1}"] -->|"数量変更は置き換え(マージ)"| C2["CartItem{productID, quantity: 2}"]
     end
 ```
 

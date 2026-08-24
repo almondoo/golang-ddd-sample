@@ -52,6 +52,14 @@ stateDiagram-v2
 メッセージには「現在どの状態にあるか」を含め、呼び出し側が原因を
 すぐに把握できるようにしている。
 
+`Order.Cancel()` 自体は状態遷移の可否判断だけを行い、取り消しに伴う
+他コンテキストへの反応（在庫の引当解除・クーポン利用実績の返却）は
+含まない。これは
+[`CancelOrderUseCase`](../../application/usecase/order/cancel_order.go)
+が `Order.Cancel()` に続けて `inventory.Stock.Release`（在庫の引当解除）
+と、クーポンが適用されていれば `coupon.Coupon.Refund`（クーポン利用実績
+の返却）を呼び出すことで実現している。
+
 状態遷移の判断ロジックを `Order` 集約のメソッド（`Pay`/`Ship`/`Cancel`）に
 閉じ込めているのは、「今どの状態からどの状態へ遷移できるか」という
 業務ルールが、アプリケーション層やプレゼンテーション層に漏れ出して

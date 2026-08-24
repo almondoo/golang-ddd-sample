@@ -11,6 +11,13 @@ type Currency string
 // Money 側は Currency を汎用的なフィールドとして保持している。
 const JPY Currency = "JPY"
 
+// maxAmount は Money が保持できる金額の上限（1兆円）である。
+// 上限を設けることで、数量（最大99）や明細数（最大20）を掛け合わせても
+// int64 がオーバーフローしない範囲に金額を閉じ込める。値オブジェクトの
+// 自己検証は「負値でない」だけでなく「演算が安全な範囲にある」ことまで
+// 保証してこそ完全になる。
+const maxAmount int64 = 1_000_000_000_000
+
 // Money は金額を表す値オブジェクト（Value Object）である。
 //
 // DDD において「値オブジェクト」とは、識別子を持たず値そのもので同一性が
@@ -29,9 +36,13 @@ type Money struct {
 
 // NewMoney は Money を生成するコンストラクタである。
 // 負の金額はドメインルール違反として拒否する。
+// また maxAmount を超える金額も拒否する。
 func NewMoney(amount int64, currency Currency) (Money, error) {
 	if amount < 0 {
 		return Money{}, NewDomainRuleError("money: amount must not be negative, got %d", amount)
+	}
+	if amount > maxAmount {
+		return Money{}, NewDomainRuleError("money: amount must not exceed %d, got %d", maxAmount, amount)
 	}
 	return Money{amount: amount, currency: currency}, nil
 }
@@ -76,11 +87,26 @@ func (m Money) Subtract(other Money) (Money, error) {
 
 // Multiply は Money を n 倍した新しい Money を返す。
 // 例えばカート内の「単価 × 数量」の計算に使うことを想定している。
+//
+// Add は m.amount と other.amount がともに maxAmount 以下（非負）である
+// ことから、両者を加算しても符号が反転する形でしかオーバーフローし得ず、
+// 結果が負になれば NewMoney の負値チェックで偶然にも弾かれる。しかし
+// Multiply は乗算であるため、オーバーフローした結果が正の値に丸め込まれて
+// NewMoney の負値チェックをすり抜ける可能性がある。そのため乗算自体の
+// オーバーフローを明示的に検査する（多重防御）。
+// なお公開 API 経由では m.amount は必ず maxAmount(1兆円) 以下であり、
+// n も呼び出し元（数量・明細数の上限）で高々 99 程度に抑えられているため、
+// この分岐に実際に到達することは無い（1e12 × 99 = 9.9e13 は
+// int64 の範囲に収まる）。それでも将来の上限緩和に備えて残す。
 func (m Money) Multiply(n int) (Money, error) {
 	if n < 0 {
 		return Money{}, NewDomainRuleError("money: multiplier must not be negative, got %d", n)
 	}
-	return NewMoney(m.amount*int64(n), m.currency)
+	result := m.amount * int64(n)
+	if n != 0 && result/int64(n) != m.amount {
+		return Money{}, NewDomainRuleError("money: multiplication overflow: %d * %d", m.amount, n)
+	}
+	return NewMoney(result, m.currency)
 }
 
 // IsZero は金額がゼロかどうかを返す。

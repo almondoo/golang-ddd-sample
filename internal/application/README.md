@@ -14,7 +14,10 @@
 2. 集約のメソッドを呼んでドメインルールに従った状態変更を行わせる
 3. リポジトリで永続化する
 4. 必要であれば、永続化成功後に他コンテキストの集約・リポジトリを
-   直接操作する（実際にこれを行うのは後述の `PlaceOrderUseCase` のみである）
+   直接操作する（後述の `PlaceOrderUseCase` が代表例だが、
+   `ShipOrderUseCase`・`CancelOrderUseCase` も同様に order 以外の
+   コンテキスト（customer/shipping/inventory、inventory/coupon）の
+   リポジトリを直接操作する）
 
 ## コマンドとクエリの分離（軽量 CQRS）
 
@@ -94,7 +97,7 @@ err = uc.txManager.Do(ctx, func(ctx context.Context) error {
     // ... カートを読み込み、明細ごとに catalog から現在価格を取得して
     //     OrderItem のスナップショットを組み立てる ...
 
-    o, err := domainorder.NewOrder(orderCustomerID, items)
+    o, err := domainorder.NewOrder(orderCustomerID, items, now)
 
     if err := uc.orderRepo.Save(ctx, o); err != nil {
         return err
@@ -154,13 +157,22 @@ Lack of Technical Mechanisms**（メッセージング等の技術的手段が�
 **本番規模での帰結。** 学習用サンプルの DB 負荷では顕在化しないが、
 実運用規模でこの設計をそのまま採用すると次のようなコストが発生する。
 
-- **ロック競合**: Cart・Order・Stock（在庫は特に競合しやすい共有リソース）・
-  Coupon の行ロックを 1 トランザクション内で同時に保持するため、同一商品を
-  同時に注文する複数リクエスト間でロック待ちが発生しやすくなる。
-- **ロールバック範囲**: 5 つのリポジトリのいずれか 1 つの保存が失敗しても、
-  トランザクション全体（Cart のクリアも含む）がロールバックされる。
-  失敗の原因（在庫不足・クーポン無効・DB 接続断など）によらず影響範囲が
-  一律に広い。
+- **並行時のロストアップデート**: 行ロックを複数集約にまたがって同時に
+  保持し続けるわけではなく、各保存（`Save`）は書き込み時にのみロックを
+  取って解放する。真の危険は「読んでから書く」間に他トランザクションが
+  割り込む lost update である。たとえば `Stock.Reserve` は
+  `FindByProductID` で読み込んだ在庫スナップショットをもとに引当可能数を
+  判定するため、2 つの注文が同時に同じ商品を読み込むと、どちらも
+  「引当可能」と判定してしまい実在庫を超えて引き当ててしまう可能性がある
+  （クーポンの利用回数上限も同様）。防ぐには `SELECT ... FOR UPDATE`
+  （gorm の `clause.Locking`）や楽観ロック（version カラム）が必要だが、
+  本サンプルは実装していない（`inventory.Stock.Reserve` のコメントを参照）。
+- **ロールバック範囲**: `PlaceOrderUseCase` は 6 つのリポジトリ
+  （order/cart/catalog/customer/inventory/coupon）を注入されており、
+  そのうち実際に保存（`Save`）を行うのは order/cart/inventory/coupon の
+  4 つである。これらのいずれか 1 つの保存が失敗しても、トランザクション
+  全体（Cart のクリアも含む）がロールバックされる。失敗の原因（在庫不足・
+  クーポン無効・DB 接続断など）によらず影響範囲が一律に広い。
 - **段階的分離の難しさ**: 将来 cart・inventory・coupon を別サービス
   （別 DB）に分離しようとすると、この 1 トランザクション前提の実装は
   そのままでは成立しなくなる。分散トランザクションや Saga パターンへの
