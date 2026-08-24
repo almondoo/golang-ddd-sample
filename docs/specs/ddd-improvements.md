@@ -14,7 +14,7 @@
 | 2(NewOrder の time.Now())| 対応済み(`now` を引数化、PlacedAt のテスト追加) |
 | 3(エラーメッセージ言語混在) | 対応済み(英語に統一) |
 | 4(トランザクションコストの過少申告) | 対応済み(application/README・order/README に実数と Vernon の位置づけを追記) |
-| 5(usecase テストゼロ) | **未対応** |
+| 5(usecase テストゼロ) | 対応済み(PlaceOrder/AddItem/SetStock を手書きフェイクでテスト、21サブテスト) |
 | 6(コンテキストマップ) | 対応済み([../context-map.md](../context-map.md)) |
 | 7(フラット persistence の防壁) | 対応済み(ドキュメント明記。パッケージ分割は未実施・将来の選択肢のまま) |
 | 8(JOIN の過大主張) | 対応済み |
