@@ -79,6 +79,68 @@ go run github.com/almondoo/wire/cmd/wire ./cmd/api
 - [internal/infrastructure/README.md](internal/infrastructure/README.md) — ドメインモデルと GORM モデルの分離(データマッパー)
 - [internal/presentation/README.md](internal/presentation/README.md) — DTO 変換、エラーマッピング
 
+## エントリポイントから末端の実装まで
+
+1 本のリクエストが `main.go` から PostgreSQL まで、どのファイルのどの関数を経由して届くかを catalog コンテキストを例に示します。実線は実行時の呼び出し、点線はインターフェースの実装関係(依存はつねに内側へ向く)です。左の command は domain 層の集約を経由し、右の query は domain 層を迂回して DTO を直接組み立てます(軽量 CQRS)。
+
+```mermaid
+flowchart TD
+    MAIN["cmd/api/main.go<br/>main() — 設定読み込みと起動のみ"]
+    WIRE["cmd/api/wire_gen.go<br/>initializeServer(dsn) — wire が生成した DI 組み立て"]
+    MUX["cmd/api/providers.go<br/>provideMux — 各コントローラを http.ServeMux に登録"]
+
+    MAIN --> WIRE --> MUX
+
+    subgraph P["internal/presentation/controller"]
+        CTRL["catalog_controller.go<br/>handleRegisterProduct(POST /products)"]
+        CTRLQ["catalog_controller.go<br/>handleListProducts(GET /products)"]
+    end
+
+    MUX -->|"HTTP リクエスト"| CTRL
+    MUX -->|"HTTP リクエスト"| CTRLQ
+
+    subgraph A["internal/application(ユースケース層)"]
+        UC["usecase/catalog/register_product.go<br/>RegisterProductUseCase.Execute"]
+        TXIF["tx/manager.go<br/>tx.Manager(IF)"]
+        QUC["usecase/catalog/list_products.go<br/>ListProductsUseCase.Execute"]
+        QSIF["usecase/catalog/query_service.go<br/>ProductQueryService(IF)"]
+    end
+
+    CTRL --> UC
+    CTRLQ --> QUC
+    UC -->|"トランザクション境界"| TXIF
+    QUC --> QSIF
+
+    subgraph D["internal/domain(最内層・外部依存ゼロ)"]
+        AGG["catalog/product.go<br/>NewProduct — 不変条件を検証"]
+        RIF["catalog/repository.go<br/>catalog.Repository(IF)"]
+    end
+
+    UC -->|"集約を生成"| AGG
+    UC -->|"Save(ctx, product)"| RIF
+
+    subgraph I["internal/infrastructure/persistence(末端の実装)"]
+        TXI["tx_manager.go<br/>TxManager.Do"]
+        REPO["catalog_repository.go<br/>ProductRepository.Save"]
+        QSI["catalog_query_service.go<br/>ProductQuery.List"]
+    end
+
+    TXI -.->|"実装"| TXIF
+    REPO -.->|"実装"| RIF
+    QSI -.->|"実装"| QSIF
+
+    RIF -->|"実行時は wire が注入した実体へ"| REPO
+    QSIF -->|"実行時は wire が注入した実体へ"| QSI
+
+    DB[("PostgreSQL<br/>(GORM 経由)")]
+
+    TXI --> DB
+    REPO --> DB
+    QSI --> DB
+```
+
+domain 層のインターフェース(`catalog.Repository`)と infrastructure 層の実装(`ProductRepository`)の対応づけは、起動時に `initializeServer` が済ませています。そのため実行時にユースケースが呼ぶのはインターフェースだけで、末端の GORM 実装を知ることはありません。command / query それぞれの詳細なシーケンス図は [docs/execution-flow.md](docs/execution-flow.md) を参照してください。
+
 ## API エンドポイント
 
 | メソッドとパス | ユースケース | 種別 |
