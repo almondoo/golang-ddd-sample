@@ -29,8 +29,12 @@
 | エラーの種類 | 判定方法 | HTTP ステータス |
 | --- | --- | --- |
 | リソースが見つからない | `errors.Is(err, shared.ErrNotFound)` | 404 Not Found |
+| 楽観ロック競合（例: `Stock` の並行更新） | `errors.Is(err, shared.ErrConflict)` | 409 Conflict |
 | ドメインルール違反 | `shared.IsDomainRuleError(err)` | 422 Unprocessable Entity |
 | その他（予期しないエラー） | 上記いずれにも該当しない | 500 Internal Server Error |
+
+`shared.ErrConflict` の詳細は
+[docs/ddd/optimistic-locking.md](../../docs/ddd/optimistic-locking.md) を参照。
 
 擬似コードで表すと以下のようになる。
 
@@ -39,6 +43,8 @@ func handleError(w http.ResponseWriter, err error) {
     switch {
     case errors.Is(err, shared.ErrNotFound):
         writeJSON(w, http.StatusNotFound, errorBody(err))
+    case errors.Is(err, shared.ErrConflict):
+        writeJSON(w, http.StatusConflict, errorBody(err))
     case shared.IsDomainRuleError(err):
         writeJSON(w, http.StatusUnprocessableEntity, errorBody(err))
     default:

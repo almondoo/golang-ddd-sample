@@ -128,5 +128,8 @@ sequenceDiagram
 | ドメイン層のエラー | 意味 | HTTP ステータス |
 |---|---|---|
 | `shared.ErrNotFound`(ラップされる) | 対象が存在しない | 404 |
+| `shared.ErrConflict`(ラップされる) | 楽観ロック競合(例: `Stock` の並行更新)。読み直してリトライすれば解消しうる | 409 |
 | `shared.NewDomainRuleError(...)` | ビジネスルール違反(例: 在庫上限超過、不正な状態遷移) | 422 |
 | 上記以外 | 想定外の失敗 | 500 |
+
+`shared.ErrConflict` の詳細は[docs/ddd/optimistic-locking.md](ddd/optimistic-locking.md)を参照してください。

@@ -17,6 +17,8 @@
 | [ubiquitous-language.md](ubiquitous-language.md) | ユビキタス言語。ID型対照表を整備済み・エラーメッセージは英語に統一済み(修正の経緯つき) | ID型対照表 |
 | [cqrs.md](cqrs.md) | CQRS(軽量版)。commandはドメイン経由、queryはDTO直行 | 2経路(command/query)のflowchart |
 | [onion-architecture.md](onion-architecture.md) | オニオンアーキテクチャと依存性逆転。4層と依存方向 | 4層依存関係のflowchart |
+| [optimistic-locking.md](optimistic-locking.md) | 楽観ロック。Stockのversionカラムによる競合検出、ErrConflict→409 | 競合検出のsequence図(TxA/TxB) |
+| [specification.md](specification.md) | 仕様(Specification)。本リポジトリでは不採用とその理由 | (図なし、テキストのみ) |
 
 より詳しい背景は以下を参照してください。
 

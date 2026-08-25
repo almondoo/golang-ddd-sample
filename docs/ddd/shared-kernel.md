@@ -12,7 +12,7 @@
 
 ```mermaid
 flowchart TB
-    Shared["shared(共有カーネル: Money / ErrNotFound / DomainRuleError / NewID)<br>実装3ファイルで200行前後・小さく保つ"]
+    Shared["shared(共有カーネル: Money / ErrNotFound / ErrConflict / DomainRuleError / NewID)<br>実装3ファイルで200行前後・小さく保つ"]
     Catalog["catalog"] --> Shared
     Cart["cart"] --> Shared
     Order["order"] --> Shared
@@ -29,7 +29,7 @@ flowchart TB
 `internal/domain/shared`がこれにあたります。中身は以下の3ファイルのみで、実装コードだけなら合計200行前後の規模です(テストコードを含めるとより多くなりますが、上限チェックの追加などで多少増減しても「小さく保つ」規模感自体は変わりません)。
 
 - [money.go](../../internal/domain/shared/money.go) — `Money`値オブジェクト(負値・通貨不一致を拒否)
-- [errors.go](../../internal/domain/shared/errors.go) — `ErrNotFound` / `NewDomainRuleError`などの共通エラー種別
+- [errors.go](../../internal/domain/shared/errors.go) — `ErrNotFound` / `ErrConflict` / `NewDomainRuleError`などの共通エラー種別
 - [id.go](../../internal/domain/shared/id.go) — `NewID`(UUID生成のラッパー)
 
 [internal/domain/README.md](../../internal/domain/README.md)も「共有カーネルは便利だが濫用すると各コンテキストの独立性を損なうため、『本当にどのコンテキストでも同じ意味を持つ、安定した概念』だけを置くべきである」と明記しており、実際にこの3ファイルの範囲を超えて肥大化していません。

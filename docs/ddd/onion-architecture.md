@@ -34,5 +34,5 @@ infrastructureがdomainに依存する(リポジトリIFを実装する)方向�
 
 ## 注意点・よくある誤解
 
-- presentation層は例外的に`domain/shared`のエラー種別(`shared.ErrNotFound` / `shared.IsDomainRuleError`)だけを直接参照します。これはエラーをHTTPステータスへ分類するためであり、外側の層が内側の層を参照すること自体はオニオンアーキテクチャのルール違反ではありません(禁止されるのは内側から外側への依存です)。
+- presentation層は例外的に`domain/shared`のエラー種別(`shared.ErrNotFound` / `shared.ErrConflict` / `shared.IsDomainRuleError`)だけを直接参照します。これはエラーをHTTPステータスへ分類するためであり、外側の層が内側の層を参照すること自体はオニオンアーキテクチャのルール違反ではありません(禁止されるのは内側から外側への依存です)。
 - 「4層」という区切りはこのリポジトリの構成であり、DDDそのものが4層構成を要求しているわけではありません。ヘキサゴナルアーキテクチャやクリーンアーキテクチャも同じ依存性のルールを別の層名で表現したものです。

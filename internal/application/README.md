@@ -163,10 +163,14 @@ Lack of Technical Mechanisms**（メッセージング等の技術的手段が�
   割り込む lost update である。たとえば `Stock.Reserve` は
   `FindByProductID` で読み込んだ在庫スナップショットをもとに引当可能数を
   判定するため、2 つの注文が同時に同じ商品を読み込むと、どちらも
-  「引当可能」と判定してしまい実在庫を超えて引き当ててしまう可能性がある
-  （クーポンの利用回数上限も同様）。防ぐには `SELECT ... FOR UPDATE`
-  （gorm の `clause.Locking`）や楽観ロック（version カラム）が必要だが、
-  本サンプルは実装していない（`inventory.Stock.Reserve` のコメントを参照）。
+  「引当可能」と判定してしまい実在庫を超えて引き当ててしまう可能性が
+  あった。これに対しては `Stock` に version カラムによる楽観ロックを
+  実装済みで、競合時は `shared.ErrConflict`（HTTP 409）を返す（詳細は
+  [docs/ddd/optimistic-locking.md](../../docs/ddd/optimistic-locking.md)）。
+  ただし自動リトライまでは実装しておらず、呼び出し側が読み直して再試行
+  する必要がある。また同種のリスクを持つ他の集約（クーポンの利用回数
+  上限など）へはまだ横展開しておらず、`SELECT ... FOR UPDATE`
+  （gorm の `clause.Locking`）や楽観ロックが必要なまま未対応の箇所が残る。
 - **ロールバック範囲**: `PlaceOrderUseCase` は 6 つのリポジトリ
   （order/cart/catalog/customer/inventory/coupon）を注入されており、
   そのうち実際に保存（`Save`）を行うのは order/cart/inventory/coupon の

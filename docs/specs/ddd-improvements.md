@@ -22,6 +22,7 @@
 | 10(ドメインサービスの記述) | 対応済み |
 | 11(NewID の非決定性注記) | 対応済み |
 | 12(shared の位置づけ明文化) | 対応済み(context-map 内) |
+| 13(Stock.Reserve の lost update リスク未対応) | 対応済み(2026-08-25、`Stock` に version カラムによる楽観ロックを実装、`shared.ErrConflict` → HTTP 409) |
 
 ## 優先度: 高
 
@@ -107,6 +108,14 @@
 - **修正方針**: コンテキストマップに「shared は bounded context ではなく Shared Kernel」と明記
 - **工数**: S
 
+### 13. `Stock.Reserve` の lost update リスクが未対応のまま残っていた
+
+- **修正前の状態**: 敵対的検証(第2ラウンド、本ファイル末尾の表を参照)で `Stock.Reserve` の並行安全性コメントの過大主張は是正したが、「並行するトランザクションが同じ在庫を同時に読み書きすると実在庫を超えて引き当ててしまう」lost update のリスク自体は残ったままだった(`internal/application/README.md` の「並行時のロストアップデート」節にも `SELECT ... FOR UPDATE` や楽観ロック(version カラム)が「本サンプルは実装していない」と明記されていた)
+- **原則**: Vernon の集約設計ルール1が守る整合性境界は「1つの集約に対する1回の操作」までであり、複数トランザクションが並行して同一集約を読み書きする場合の保護は別途必要になる(詳細は[../ddd/optimistic-locking.md](../ddd/optimistic-locking.md))
+- **修正方針**: `inventory.Stock` に `version` フィールドを追加(`NewStock` は 0=未永続化 から開始し実際の `version=1` はリポジトリの INSERT 時に採番、`ReconstructStock` は DB から読んだ版数(常に1以上)を受け取る)。`StockRepository.Save` は集約自身の `version` だけで分岐し(DB への存在確認は行わない)、`version == 0` なら `version=1` で INSERT(一意制約違反は `shared.ErrConflict` に変換)、`version >= 1` なら `UPDATE ... WHERE product_id = ? AND version = ?` の条件付き更新で `version+1` し `RowsAffected == 0` を `shared.ErrConflict` にマッピングする。プレゼンテーション層は `ErrConflict` を HTTP 409 に変換する
+- **工数**: S(ドメイン・インフラ・プレゼンテーション各層の小さな変更、マイグレーションファイルは不要で既存の GORM AutoMigrate に乗る)
+- **状態**: 対応済み(2026-08-25)。当初は「`product_id` の COUNT で存在確認してから INSERT/UPDATE を分岐する」実装だったが、この存在確認と書き込みの間に他のトランザクションが割り込む TOCTOU 競合(`NewStock` も `version=1` から始まっていたため、後発の UPDATE 分岐が偶然 `WHERE version = 1` にマッチし先発の書き込みを黙って上書きする lost update)がレビューで指摘され、同日中に「集約の `version` だけで分岐する(`version == 0` を未永続化の規約とする)」方式へ修正済み。詳細は[../ddd/optimistic-locking.md](../ddd/optimistic-locking.md)を参照。他の集約(coupon の利用回数上限など)への横展開は未実施で、今後の課題として残る
+
 ## 実施順の提案
 
 1. 事実誤りの修正(項目1)と小さなコード修正(項目2・3)
@@ -123,7 +132,7 @@
 | 指摘 | 対応 |
 |---|---|
 | `Money` の乗算・加算がオーバーフローしうる | `maxAmount`(1兆円)上限を `NewMoney` に追加し、`Multiply` にオーバーフローガードを実装済み |
-| `Stock.Reserve` のコメントが並行安全であるかのように過大主張していた | 「1つの Stock インスタンスに対する操作の整合性まで」とスコープを正直に限定し、並行時の lost update リスクを明記済み |
+| `Stock.Reserve` のコメントが並行安全であるかのように過大主張していた | 「1つの Stock インスタンスに対する操作の整合性まで」とスコープを正直に限定し、並行時の lost update リスクを明記(その後、2026-08-25 に version カラムによる楽観ロックを実装しリスク自体を解消。項目13・[optimistic-locking.md](../ddd/optimistic-locking.md)参照) |
 | 発送完了時に生成される `ShipmentID` をクライアントが取得する手段がなかった | `POST /orders/{id}/ship` のレスポンスを 204 から 200 `{"shipmentId": ...}` へ変更する設計に修正済み |
 | 注文キャンセル時にクーポンの利用実績が戻らなかった | `Coupon.Refund` を実装し、`CancelOrderUseCase` から呼び出すように修正済み |
 | `place_order_test.go` がリポジトリの `Save` 呼び出しを検証していなかった | フェイクリポジトリに呼び出し記録を持たせ、`Save` が呼ばれたことを断言するアサーションを追加済み |

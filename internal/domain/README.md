@@ -23,7 +23,7 @@
 - プレゼンテーション層 → 主にアプリケーション層に依存する。ただし
   `internal/presentation/controller/response.go` はエラーを HTTP ステータスへ
   分類するために `domain/shared` のエラー種別（`shared.ErrNotFound` /
-  `shared.IsDomainRuleError`）を直接参照する。外側から内側への依存は
+  `shared.ErrConflict` / `shared.IsDomainRuleError`）を直接参照する。外側から内側への依存は
   オニオンアーキテクチャで許容される（禁止されるのは内側から外側への依存）ため、
   この参照自体は依存性のルールに反しない。
 
@@ -77,7 +77,7 @@ GORM 用の永続化モデル（`internal/infrastructure` 配下に置く）を�
 `shared` パッケージは、特定のコンテキスト（catalog / cart / order）に
 属さない、複数のコンテキストで再利用される「共有カーネル（Shared Kernel）」を
 置く場所である。`Money` のような汎用的な値オブジェクトや、
-`ErrNotFound` / `DomainRuleError` といった共通エラー種別をここに置く。
+`ErrNotFound` / `ErrConflict` / `DomainRuleError` といった共通エラー種別をここに置く。
 
 共有カーネルは便利だが濫用すると各コンテキストの独立性を損なうため、
 「本当にどのコンテキストでも同じ意味を持つ、安定した概念」だけを置くべきである。
