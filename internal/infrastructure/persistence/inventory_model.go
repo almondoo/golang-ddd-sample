@@ -14,6 +14,9 @@ type StockModel struct {
 	ProductID string `gorm:"primaryKey"`
 	Quantity  int
 	Reserved  int
+	// Version は楽観ロック用の版数カラムである。Save 時に
+	// WHERE version = ? の条件付き更新に使い、更新のたびに +1 する。
+	Version int `gorm:"not null;default:1"`
 }
 
 // TableName は GORM に対して物理テーブル名を明示する。
@@ -29,7 +32,7 @@ func (m StockModel) toDomain() (*inventory.Stock, error) {
 	if err != nil {
 		return nil, err
 	}
-	return inventory.ReconstructStock(productID, m.Quantity, m.Reserved), nil
+	return inventory.ReconstructStock(productID, m.Quantity, m.Reserved, m.Version), nil
 }
 
 // stockModelFromDomain はドメイン集約から永続化モデルを組み立てる。
@@ -38,5 +41,6 @@ func stockModelFromDomain(s *inventory.Stock) StockModel {
 		ProductID: s.ProductID().String(),
 		Quantity:  s.Quantity(),
 		Reserved:  s.Reserved(),
+		Version:   s.Version(),
 	}
 }

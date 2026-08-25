@@ -25,14 +25,38 @@ type Stock struct {
 	productID ProductID
 	quantity  int
 	reserved  int
+	// version は楽観ロック（optimistic lock）のための版数である。
+	//
+	// 並行するトランザクション同士の競合（同じ在庫を同時に読んで同時に
+	// 更新する lost update）は、Reserve 等の不変条件チェックだけでは
+	// 防げない。それらのチェックは「1つの Stock インスタンスに対する
+	// 操作」の整合性しか守れないためである。version をドメインモデル自身に
+	// 持たせているのは、「この集約が読み込まれた時点の版数」を業務ロジックと
+	// 一体で扱えるようにするため、つまり集約の整合性境界（consistency
+	// boundary）をアプリケーション層やインフラ層に漏らさず、Stock 自身の
+	// 状態として管理するためである。永続化層はこの version を使って
+	// 「読んでから保存するまでの間に他のトランザクションが更新していないか」を
+	// UPDATE ... WHERE version = ? という条件付き更新で検出し、競合していれば
+	// shared.ErrConflict を返す。
+	//
+	// version == 0 は「まだ一度も永続化されていない」ことを表す規約である
+	// （INSERT 時に永続化層が version = 1 を採番する）。この規約により、
+	// リポジトリ実装は「DB に行が存在するかどうか」を別途問い合わせて
+	// INSERT/UPDATE を判定する必要がなくなり、集約自身が持つ version だけで
+	// 判定できる（find-or-create のような「先に存在確認してから分岐する」
+	// パスに潜む TOCTOU（Time-Of-Check-Time-Of-Use）競合を避けられる）。
+	version int
 }
 
 // NewStock は新しい在庫を初期数量とともに生成する。
+// 新規作成した集約の版数は 0（未永続化）から始める。version フィールドの
+// コメントに記した規約のとおり、実際に version = 1 が採番されるのは
+// リポジトリの Save が INSERT を行った時点である。
 func NewStock(productID ProductID, quantity int) (*Stock, error) {
 	if quantity < 0 {
 		return nil, shared.NewDomainRuleError("inventory: quantity must not be negative, got %d", quantity)
 	}
-	return &Stock{productID: productID, quantity: quantity, reserved: 0}, nil
+	return &Stock{productID: productID, quantity: quantity, reserved: 0, version: 0}, nil
 }
 
 // ReconstructStock は永続化層から読み込んだデータをもとに Stock を再構築する。
@@ -42,8 +66,13 @@ func NewStock(productID ProductID, quantity int) (*Stock, error) {
 // 意図を表す。DB の値は過去に検証済みという前提のもと、検証を行わない
 // 「素通し」の関数として分離している（cart.ReconstructCart と同じ判断）。
 // リポジトリ実装（infrastructure 層）からのみ呼ばれることを想定している。
-func ReconstructStock(productID ProductID, quantity, reserved int) *Stock {
-	return &Stock{productID: productID, quantity: quantity, reserved: reserved}
+//
+// version は DB から読み出した時点の版数をそのまま渡す。この Stock が
+// 後で Save される際、リポジトリはこの version を使って
+// 「保存しようとしている内容が読み込み時点から更新されていないか」を
+// 楽観ロックで検証する。
+func ReconstructStock(productID ProductID, quantity, reserved, version int) *Stock {
+	return &Stock{productID: productID, quantity: quantity, reserved: reserved, version: version}
 }
 
 // ProductID はこの在庫が対象とする商品の ID を返す。
@@ -64,6 +93,12 @@ func (s *Stock) Reserved() int {
 // Available は引当可能な残数量（実在庫 - 引当済み）を返す。
 func (s *Stock) Available() int {
 	return s.quantity - s.reserved
+}
+
+// Version は楽観ロックのための版数を返す。
+// リポジトリ実装が Save 時の条件付き更新（WHERE version = ?）に使う。
+func (s *Stock) Version() int {
+	return s.version
 }
 
 // SetQuantity は実在庫数を n に設定する（入荷・棚卸し等による在庫数の更新）。
@@ -91,10 +126,13 @@ func (s *Stock) SetQuantity(n int) error {
 //
 // ただしこの不変条件が守るのは「1つの Stock インスタンスに対する操作」の
 // 整合性まで。並行するトランザクション同士の競合（同じ在庫を同時に読んで
-// 同時に引き当てる lost update）は集約だけでは防げず、実運用では
-// SELECT ... FOR UPDATE（gorm の clause.Locking）や楽観ロック（version
-// カラム）が必要になる。本サンプルはロック制御を実装していないため、
-// 複数の注文が同時に確定すると実在庫を超えて引き当ててしまう可能性がある。
+// 同時に引き当てる lost update）は集約だけでは防げない。この Stock は
+// version フィールドを持ち、リポジトリ実装（infrastructure 層）が
+// Save 時に WHERE version = ? の条件付き更新で楽観ロックを行うことで、
+// 「読み込んでから保存するまでの間に他のトランザクションが先に更新した」
+// 競合を検出し shared.ErrConflict を返す。呼び出し側（ユースケース）は
+// この場合、在庫を読み直してから Reserve をやり直す（リトライする）ことを
+// 想定している。
 func (s *Stock) Reserve(n int) error {
 	if n < 1 {
 		return shared.NewDomainRuleError("inventory: reserve quantity must be at least 1, got %d", n)

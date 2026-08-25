@@ -55,6 +55,12 @@ func TestNewStock(t *testing.T) {
 			if s.Reserved() != 0 {
 				t.Errorf("Reserved() = %d, want 0", s.Reserved())
 			}
+			// 新規生成した在庫の版数は 0 から始まる（「まだ一度も永続化されて
+			// いない」ことを表す規約。実際に version=1 が採番されるのは
+			// リポジトリの Save が INSERT を行った時点である）。
+			if s.Version() != 0 {
+				t.Errorf("Version() = %d, want 0", s.Version())
+			}
 		})
 	}
 }
@@ -262,10 +268,11 @@ func TestStock_SetQuantity(t *testing.T) {
 }
 
 // TestReconstructStock は永続化層からの復元が検証をスキップして
-// そのまま状態を再現することを確認する。
+// そのまま状態を再現することを確認する。version も DB から読み出した値を
+// そのまま引き継ぐことを検証する（楽観ロックの前提となる挙動）。
 func TestReconstructStock(t *testing.T) {
 	productID := mustProductID(t, "product-1")
-	s := inventory.ReconstructStock(productID, 10, 4)
+	s := inventory.ReconstructStock(productID, 10, 4, 3)
 	if s.ProductID() != productID {
 		t.Errorf("ProductID() = %v, want %v", s.ProductID(), productID)
 	}
@@ -277,5 +284,8 @@ func TestReconstructStock(t *testing.T) {
 	}
 	if s.Available() != 6 {
 		t.Errorf("Available() = %d, want 6", s.Available())
+	}
+	if s.Version() != 3 {
+		t.Errorf("Version() = %d, want 3", s.Version())
 	}
 }

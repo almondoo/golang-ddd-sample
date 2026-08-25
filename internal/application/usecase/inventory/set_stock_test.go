@@ -170,6 +170,38 @@ func TestSetStockUseCase_Execute(t *testing.T) {
 		}
 	})
 
+	t.Run("Save error wrapping ErrConflict propagates (optimistic lock conflict)", func(t *testing.T) {
+		// リポジトリの Save が楽観ロック競合を検出した場合、
+		// shared.ErrConflict をラップしたエラーを返す。ユースケースは
+		// それを握りつぶさずそのまま呼び出し元に伝播させ、
+		// errors.Is(err, shared.ErrConflict) で判定できる状態を保つ必要がある。
+		repo := newFakeInventoryRepository()
+		productID, err := domaininventory.NewProductID(testProductID)
+		if err != nil {
+			t.Fatalf("failed to build product id fixture: %v", err)
+		}
+		existing, err := domaininventory.NewStock(productID, 10)
+		if err != nil {
+			t.Fatalf("failed to build stock fixture: %v", err)
+		}
+		repo.stocks[productID] = existing
+		repo.saveErr = fmt.Errorf("stock update conflict: product_id=%s: %w", productID, shared.ErrConflict)
+
+		txManager := &fakeTxManager{}
+		useCase := inventory.NewSetStockUseCase(repo, txManager)
+
+		err = useCase.Execute(context.Background(), inventory.SetStockInput{
+			ProductID: testProductID,
+			Quantity:  25,
+		})
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if !errors.Is(err, shared.ErrConflict) {
+			t.Fatalf("expected error to wrap shared.ErrConflict, got %v", err)
+		}
+	})
+
 	t.Run("FindByProductID error propagates", func(t *testing.T) {
 		repo := newFakeInventoryRepository()
 		injectedErr := errors.New("db: connection lost")

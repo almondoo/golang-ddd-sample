@@ -53,7 +53,7 @@ func (f *cancelOrderFixture) addStock(quantity, reserved int) domaininventory.Pr
 	if err != nil {
 		f.t.Fatalf("failed to build inventory product id fixture: %v", err)
 	}
-	f.inventoryRepo.stocks[pid] = domaininventory.ReconstructStock(pid, quantity, reserved)
+	f.inventoryRepo.stocks[pid] = domaininventory.ReconstructStock(pid, quantity, reserved, 1)
 	return pid
 }
 

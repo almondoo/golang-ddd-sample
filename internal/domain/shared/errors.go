@@ -16,6 +16,20 @@ import (
 // プレゼンテーション層はこのエラーを HTTP 404 に変換する。
 var ErrNotFound = errors.New("not found")
 
+// ErrConflict は楽観ロック（optimistic lock）による更新競合を表す
+// センチネルエラーである。
+//
+// 「読み込んだ時点のバージョンと、書き込もうとする時点のバージョンが
+// 一致しない」状態、つまり自分が読んでから保存するまでの間に別の
+// トランザクションが同じ集約を先に更新してしまった（lost update の
+// 発生条件）ことを表す。ErrNotFound 同様、リポジトリ実装は %w でラップして
+// 返すこと（例: fmt.Errorf("stock update conflict: id=%s: %w", id,
+// shared.ErrConflict)）。呼び出し側は errors.Is(err, shared.ErrConflict) で
+// 判定し、リトライ（再読み込みしてから再実行）するかどうかを決められる。
+//
+// プレゼンテーション層はこのエラーを HTTP 409 Conflict に変換する。
+var ErrConflict = errors.New("conflict")
+
 // ruleError はドメインルール（不変条件・ビジネスルール）違反を表す
 // エラー型である。amount が負である、在庫が不足している、といった
 // 「入力値としては妥当だが業務的に許されない」状態を表現するために使う。

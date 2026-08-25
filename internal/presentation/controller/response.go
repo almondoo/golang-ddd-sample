@@ -35,6 +35,7 @@ func WriteJSON(w http.ResponseWriter, status int, v any) {
 //
 // 変換規則:
 //   - shared.ErrNotFound(をラップしたもの) → 404 Not Found
+//   - shared.ErrConflict(をラップしたもの) → 409 Conflict
 //   - shared.NewDomainRuleError で作られたビジネスルール違反 → 422 Unprocessable Entity
 //   - それ以外(想定外の失敗) → 500 Internal Server Error
 //
@@ -43,6 +44,11 @@ func WriteError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, shared.ErrNotFound):
 		WriteJSON(w, http.StatusNotFound, errorResponse{Error: err.Error()})
+	case errors.Is(err, shared.ErrConflict):
+		// 楽観ロック競合はクライアントが最新状態を読み直してリトライすれば
+		// 解消しうるため、クライアント側の問題として扱う 409 Conflict を返す
+		// (サーバー内部の問題を表す 500 とは区別する)。
+		WriteJSON(w, http.StatusConflict, errorResponse{Error: err.Error()})
 	case shared.IsDomainRuleError(err):
 		WriteJSON(w, http.StatusUnprocessableEntity, errorResponse{Error: err.Error()})
 	default:

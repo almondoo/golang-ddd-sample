@@ -15,7 +15,12 @@ import (
 // dsn は "host=... user=... password=... dbname=... port=... sslmode=..." の
 // ような Postgres 接続文字列を想定している。
 func NewDB(dsn string) (*gorm.DB, error) {
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// TranslateError: true は、ドライバ固有のエラー（*pgconn.PgError 等）を
+	// GORM 共通のセンチネルエラー（gorm.ErrDuplicatedKey 等）に変換させる
+	// 設定である。StockRepository.Save は一意制約違反の検出に
+	// errors.Is(err, gorm.ErrDuplicatedKey) を使っており、これが有効で
+	// ないとドライバ固有エラーがそのまま返ってしまい判定できない。
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{TranslateError: true})
 	if err != nil {
 		return nil, err
 	}
