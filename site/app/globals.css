@@ -1,0 +1,120 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+  DDD絵本サイト デザイントークン
+  ライトモードのみ(ダークモードは提供しない)。
+  ui-ux-pro-maxで承認されたティール基調のパレットをshadcnのテーマ変数へマッピングする。
+*/
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-heading);
+  --font-mono: var(--font-geist-mono);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* 背景・文字色: 淡いティール背景に、深いティールの文字(コントラスト比 約9:1) */
+  --background: #f0fdfa;
+  --foreground: #134e4a;
+
+  --card: #ffffff;
+  --card-foreground: #134e4a;
+  --popover: #ffffff;
+  --popover-foreground: #134e4a;
+
+  /* プライマリ: ティール。ボタン等の大きめ文字・太字での使用を想定 */
+  --primary: #0d9488;
+  --primary-foreground: #ffffff;
+
+  /* セカンダリ: 明るいティール。白文字は載せず、必ず濃い前景色を使う */
+  --secondary: #2dd4bf;
+  --secondary-foreground: #134e4a;
+
+  --muted: #e8f1f4;
+  --muted-foreground: #4b6b68;
+
+  /* アクセント: 暖色のオレンジ。差し色・数字バッジなどに使用 */
+  --accent: #d97706;
+  --accent-foreground: #ffffff;
+
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  --border: #5eead4;
+  --input: #5eead4;
+  --ring: #0d9488;
+
+  --chart-1: #0d9488;
+  --chart-2: #2dd4bf;
+  --chart-3: #d97706;
+  --chart-4: #5eead4;
+  --chart-5: #134e4a;
+
+  /* clay(粘土)っぽい丸みのため、shadcnの初期値より大きめに */
+  --radius: 1.25rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    line-height: 1.8;
+  }
+  html {
+    @apply font-sans scroll-smooth;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-heading;
+  }
+}
+
+@layer utilities {
+  /* 「クレイっぽい」柔らかい層状シャドウ。カード類の浮遊感に使う */
+  .shadow-clay {
+    box-shadow:
+      0 1px 2px rgba(19, 78, 74, 0.06),
+      0 12px 28px rgba(19, 78, 74, 0.1);
+  }
+  .shadow-clay-lg {
+    box-shadow:
+      0 2px 4px rgba(19, 78, 74, 0.06),
+      0 20px 44px rgba(19, 78, 74, 0.14);
+  }
+}
