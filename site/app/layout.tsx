@@ -37,6 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="ja"
+      data-scroll-behavior="smooth"
       className={`${baloo2.variable} ${mplusRounded.variable} h-full`}
       style={
         {
