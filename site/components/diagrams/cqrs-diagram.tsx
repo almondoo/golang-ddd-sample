@@ -21,15 +21,15 @@ export function CqrsDiagram() {
       {/* command column */}
       <rect x="60" y="35" width="180" height="50" rx="14" fill="var(--primary)" />
       <text x="150" y="65" textAnchor="middle" className="font-mono" fontWeight="700" fontSize="11" fill="var(--primary-foreground)">RegisterProductUseCase</text>
-      <line x1="150" y1="85" x2="150" y2="115" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#cqrs-arrow)" />
+      <line x1="150" y1="85" x2="150" y2="109" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#cqrs-arrow)" />
 
       <rect x="60" y="115" width="180" height="50" rx="14" fill="var(--card)" stroke="var(--primary)" strokeWidth="2.5" />
       <text x="150" y="145" textAnchor="middle" className="font-mono" fontWeight="700" fontSize="11" fill="var(--foreground)">catalog.Repository(IF)</text>
-      <line x1="150" y1="165" x2="150" y2="195" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#cqrs-arrow)" />
+      <line x1="150" y1="165" x2="150" y2="189" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#cqrs-arrow)" />
 
       <rect x="60" y="195" width="180" height="50" rx="14" fill="var(--card)" stroke="var(--primary)" strokeWidth="2.5" />
       <text x="150" y="225" textAnchor="middle" fontWeight="700" fontSize="12" fill="var(--foreground)">Product集約(検証)</text>
-      <line x1="150" y1="245" x2="150" y2="275" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#cqrs-arrow)" />
+      <line x1="150" y1="245" x2="150" y2="269" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#cqrs-arrow)" />
 
       <rect x="60" y="275" width="180" height="50" rx="14" fill="var(--primary)" />
       <text x="150" y="305" textAnchor="middle" fontWeight="700" fontSize="12" fill="var(--primary-foreground)">GORM実装(INSERT/UPDATE)</text>
@@ -37,11 +37,11 @@ export function CqrsDiagram() {
       {/* query column */}
       <rect x="320" y="35" width="180" height="50" rx="14" fill="var(--chart-2)" />
       <text x="410" y="65" textAnchor="middle" className="font-mono" fontWeight="700" fontSize="11" fill="var(--foreground)">ListProductsUseCase</text>
-      <line x1="410" y1="85" x2="410" y2="115" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#cqrs-arrow)" />
+      <line x1="410" y1="85" x2="410" y2="109" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#cqrs-arrow)" />
 
       <rect x="320" y="115" width="180" height="50" rx="14" fill="var(--card)" stroke="var(--chart-2)" strokeWidth="2.5" />
       <text x="410" y="145" textAnchor="middle" className="font-mono" fontWeight="700" fontSize="11" fill="var(--foreground)">ProductQueryService(IF)</text>
-      <line x1="410" y1="165" x2="410" y2="275" stroke="var(--foreground)" strokeWidth="3" strokeDasharray="7 6" markerEnd="url(#cqrs-arrow)" />
+      <line x1="410" y1="165" x2="410" y2="269" stroke="var(--foreground)" strokeWidth="3" strokeDasharray="7 6" markerEnd="url(#cqrs-arrow)" />
       <text x="500" y="220" textAnchor="middle" fontSize="11" fill="var(--muted-foreground)">ドメインを迂回</text>
 
       <rect x="320" y="275" width="180" height="50" rx="14" fill="var(--chart-2)" />

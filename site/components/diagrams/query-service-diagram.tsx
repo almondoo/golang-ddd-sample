@@ -22,16 +22,16 @@ export function QueryServiceDiagram() {
       {/* 書く窓口カウンター */}
       <rect x="50" y="40" width="200" height="52" rx="14" fill="var(--primary)" />
       <text x="150" y="71" textAnchor="middle" className="font-mono" fontWeight="700" fontSize="11" fill="var(--primary-foreground)">ChangePriceUseCase</text>
-      <line x1="150" y1="92" x2="150" y2="122" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#qs-arrow)" />
+      <line x1="150" y1="92" x2="150" y2="116" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#qs-arrow)" />
 
       <rect x="50" y="122" width="200" height="52" rx="14" fill="var(--card)" stroke="var(--primary)" strokeWidth="2.5" />
       <text x="150" y="153" textAnchor="middle" fontWeight="700" fontSize="13" fill="var(--foreground)">集約(ドメイン)</text>
       <text x="150" y="168" textAnchor="middle" className="font-mono" fontSize="10" fill="var(--foreground)" opacity="0.85">Product / Cart</text>
-      <line x1="150" y1="174" x2="150" y2="204" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#qs-arrow)" />
+      <line x1="150" y1="174" x2="150" y2="198" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#qs-arrow)" />
 
       <rect x="50" y="204" width="200" height="52" rx="14" fill="var(--card)" stroke="var(--primary)" strokeWidth="2.5" />
       <text x="150" y="235" textAnchor="middle" className="font-mono" fontWeight="700" fontSize="11" fill="var(--foreground)">catalog.Repository(IF)</text>
-      <line x1="150" y1="256" x2="150" y2="286" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#qs-arrow)" />
+      <line x1="150" y1="256" x2="150" y2="280" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#qs-arrow)" />
 
       <rect x="50" y="286" width="200" height="52" rx="14" fill="var(--primary)" />
       <text x="150" y="317" textAnchor="middle" fontWeight="700" fontSize="12" fill="var(--primary-foreground)">正式ルートを通って保存</text>
@@ -39,7 +39,7 @@ export function QueryServiceDiagram() {
       {/* 見る窓口カウンター */}
       <rect x="350" y="40" width="200" height="52" rx="14" fill="var(--chart-2)" />
       <text x="450" y="71" textAnchor="middle" className="font-mono" fontWeight="700" fontSize="11" fill="var(--foreground)">ListProductsUseCase</text>
-      <line x1="450" y1="92" x2="450" y2="122" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#qs-arrow)" />
+      <line x1="450" y1="92" x2="450" y2="116" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#qs-arrow)" />
 
       <rect x="350" y="122" width="200" height="52" rx="14" fill="var(--card)" stroke="var(--chart-2)" strokeWidth="2.5" />
       <text x="450" y="148" textAnchor="middle" className="font-mono" fontWeight="700" fontSize="10.5" fill="var(--foreground)">ProductQueryService(IF)</text>
@@ -54,12 +54,12 @@ export function QueryServiceDiagram() {
       </g>
       <text x="290" y="115" textAnchor="middle" fontSize="11" fill="var(--muted-foreground)">素通り</text>
 
-      <line x1="450" y1="174" x2="450" y2="204" stroke="var(--foreground)" strokeWidth="3" strokeDasharray="7 6" markerEnd="url(#qs-arrow)" />
+      <line x1="450" y1="174" x2="450" y2="198" stroke="var(--foreground)" strokeWidth="3" strokeDasharray="7 6" markerEnd="url(#qs-arrow)" />
 
       <rect x="350" y="204" width="200" height="52" rx="14" fill="var(--card)" stroke="var(--chart-2)" strokeWidth="2.5" />
       <text x="450" y="227" textAnchor="middle" className="font-mono" fontWeight="700" fontSize="11" fill="var(--foreground)">persistence.*Query</text>
       <text x="450" y="243" textAnchor="middle" fontSize="10" fill="var(--foreground)" opacity="0.85">DTOに直行</text>
-      <line x1="450" y1="256" x2="450" y2="286" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#qs-arrow)" />
+      <line x1="450" y1="256" x2="450" y2="280" stroke="var(--foreground)" strokeWidth="3" markerEnd="url(#qs-arrow)" />
 
       <rect x="350" y="286" width="200" height="52" rx="14" fill="var(--chart-2)" />
       <text x="450" y="317" textAnchor="middle" fontWeight="700" fontSize="12" fill="var(--foreground)">DTOを直接返す</text>

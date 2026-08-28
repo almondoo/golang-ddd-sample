@@ -45,8 +45,8 @@ export function OptimisticLockingDiagram() {
       <text x="280" y="150" textAnchor="middle" fontSize="12" fill="var(--muted-foreground)">両方とも version=1 を読む</text>
 
       {/* 結果 */}
-      <line x1="105" y1="215" x2="105" y2="300" stroke="var(--primary)" strokeWidth="4" markerEnd="url(#ol-arrow)" />
-      <line x1="470" y1="215" x2="470" y2="300" stroke="var(--destructive)" strokeWidth="4" markerEnd="url(#ol-arrow)" />
+      <line x1="105" y1="252" x2="105" y2="300" stroke="var(--primary)" strokeWidth="4" markerEnd="url(#ol-arrow)" />
+      <line x1="470" y1="252" x2="470" y2="300" stroke="var(--destructive)" strokeWidth="4" markerEnd="url(#ol-arrow)" />
 
       <rect x="15" y="305" width="185" height="90" rx="18" fill="var(--card)" stroke="var(--primary)" strokeWidth="3" />
       <path d="M 45 350 L 60 365 L 90 330" stroke="var(--primary)" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />

@@ -25,7 +25,7 @@ export function DomainServiceDiagram() {
       </text>
 
       {/* Yes -> 集約のメソッド */}
-      <line x1="450" y1="50" x2="432" y2="140" stroke="var(--primary)" strokeWidth="4" markerEnd="url(#ds-arrow)" />
+      <line x1="450" y1="50" x2="440" y2="100" stroke="var(--primary)" strokeWidth="4" markerEnd="url(#ds-arrow)" />
       <text x="450" y="105" fontSize="13" fontWeight="800" fill="var(--primary)">Yes</text>
       <rect x="430" y="110" width="200" height="70" rx="16" fill="var(--primary)" />
       <text x="530" y="140" textAnchor="middle" fontWeight="800" fontSize="14" fill="var(--primary-foreground)">
@@ -36,7 +36,7 @@ export function DomainServiceDiagram() {
       </text>
 
       {/* No -> Q2 */}
-      <line x1="280" y1="80" x2="280" y2="210" stroke="var(--foreground)" strokeWidth="4" markerEnd="url(#ds-arrow)" />
+      <line x1="280" y1="80" x2="280" y2="200" stroke="var(--foreground)" strokeWidth="4" markerEnd="url(#ds-arrow)" />
       <text x="300" y="150" fontSize="13" fontWeight="800" fill="var(--foreground)">No</text>
 
       {/* Q2 */}
@@ -49,7 +49,7 @@ export function DomainServiceDiagram() {
       </text>
 
       {/* Yes -> ドメインサービス(不採用) */}
-      <line x1="460" y1="240" x2="432" y2="345" stroke="var(--muted-foreground)" strokeWidth="4" markerEnd="url(#ds-arrow)" />
+      <line x1="460" y1="240" x2="444" y2="300" stroke="var(--muted-foreground)" strokeWidth="4" markerEnd="url(#ds-arrow)" />
       <text x="465" y="290" fontSize="13" fontWeight="800" fill="var(--muted-foreground)">Yes</text>
       <rect x="430" y="310" width="200" height="90" rx="16" fill="var(--muted)" stroke="var(--muted-foreground)" strokeWidth="2.5" strokeDasharray="7 6" />
       <text x="530" y="340" textAnchor="middle" fontWeight="800" fontSize="14" fill="var(--muted-foreground)">
@@ -66,7 +66,7 @@ export function DomainServiceDiagram() {
       <line x1="601" y1="313" x2="619" y2="331" stroke="var(--muted-foreground)" strokeWidth="3" strokeLinecap="round" />
 
       {/* No -> アプリケーションサービス */}
-      <line x1="280" y1="270" x2="280" y2="400" stroke="var(--accent)" strokeWidth="4" markerEnd="url(#ds-arrow)" />
+      <line x1="280" y1="270" x2="280" y2="390" stroke="var(--accent)" strokeWidth="4" markerEnd="url(#ds-arrow)" />
       <text x="265" y="340" textAnchor="end" fontSize="13" fontWeight="800" fill="var(--accent)">No(コンテキストをまたぐ)</text>
       <rect x="130" y="400" width="300" height="80" rx="20" fill="var(--accent)" />
       <text x="280" y="435" textAnchor="middle" fontWeight="800" fontSize="15" fill="var(--accent-foreground)">

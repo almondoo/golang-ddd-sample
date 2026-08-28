@@ -6,12 +6,12 @@
 export function SharedKernelDiagram() {
   const contexts = [
     { name: "catalog", x: 280, y: 65, sx: 280, sy: 87, ex: 280, ey: 155 },
-    { name: "cart", x: 409, y: 127, sx: 392, sy: 141, ex: 339, ey: 183 },
-    { name: "order", x: 441, y: 267, sx: 420, sy: 262, ex: 353, ey: 247 },
+    { name: "cart", x: 409, y: 127, sx: 392, sy: 141, ex: 356, ey: 170 },
+    { name: "order", x: 441, y: 267, sx: 420, sy: 262, ex: 375, ey: 252 },
     { name: "customer", x: 352, y: 379, sx: 342, sy: 359, ex: 313, ey: 298 },
     { name: "inventory", x: 208, y: 379, sx: 218, sy: 359, ex: 248, ey: 298 },
-    { name: "shipping", x: 119, y: 267, sx: 141, sy: 262, ex: 207, ey: 247 },
-    { name: "coupon", x: 151, y: 127, sx: 168, sy: 141, ex: 221, ey: 183 },
+    { name: "shipping", x: 119, y: 267, sx: 141, sy: 262, ex: 185, ey: 252 },
+    { name: "coupon", x: 151, y: 127, sx: 168, sy: 141, ex: 204, ey: 170 },
   ];
 
   return (

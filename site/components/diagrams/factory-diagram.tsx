@@ -31,7 +31,7 @@ export function FactoryDiagram() {
         (検証あり)
       </text>
 
-      <line x1="440" y1="80" x2="470" y2="60" stroke="var(--primary)" strokeWidth="4" markerEnd="url(#factory-arrow)" />
+      <line x1="440" y1="80" x2="462" y2="65" stroke="var(--primary)" strokeWidth="4" markerEnd="url(#factory-arrow)" />
       <rect x="470" y="30" width="110" height="50" rx="14" fill="var(--secondary)" />
       <text x="525" y="60" textAnchor="middle" fontWeight="700" fontSize="12" fill="var(--secondary-foreground)">
         *Product(新規)
@@ -61,7 +61,7 @@ export function FactoryDiagram() {
         (検証なし)
       </text>
 
-      <line x1="470" y1="305" x2="495" y2="305" stroke="var(--accent)" strokeWidth="4" markerEnd="url(#factory-arrow)" />
+      <line x1="470" y1="305" x2="485" y2="305" stroke="var(--accent)" strokeWidth="4" markerEnd="url(#factory-arrow)" />
       <rect x="495" y="280" width="90" height="50" rx="14" fill="var(--secondary)" />
       <text x="540" y="310" textAnchor="middle" fontWeight="700" fontSize="12" fill="var(--secondary-foreground)">
         *Product(復元)

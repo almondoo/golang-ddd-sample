@@ -45,8 +45,10 @@ export function ContextMapDiagram() {
         const uy = dy / len;
         const x1 = 280 + ux * 70;
         const y1 = 240 + uy * 42;
-        const x2 = n.x - ux * 60;
-        const y2 = n.y - uy * 30;
+        // 矩形境界(半幅55×半高23)の8unit手前で止め、矢頭が角丸コーナーへ食い込まないようにする
+        const stop = Math.min(55 / Math.abs(ux), 23 / Math.abs(uy)) + 8;
+        const x2 = n.x - ux * stop;
+        const y2 = n.y - uy * stop;
         return (
           <g key={n.key}>
             <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--primary)" strokeWidth="3.5" markerEnd="url(#cm-arrow)" />

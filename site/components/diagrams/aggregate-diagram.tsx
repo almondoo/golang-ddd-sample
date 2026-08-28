@@ -38,10 +38,10 @@ export function AggregateDiagram() {
 
       {/* 右: AddItem()経由なら受け付けられる */}
       <line x1="505" y1="110" x2="400" y2="150" stroke="var(--primary)" strokeWidth="7" strokeLinecap="round" />
-      <polygon points="400,150 419,142 411,161" fill="var(--primary)" />
+      <polygon points="400,150 413.3,134.2 420.4,152.9" fill="var(--primary)" />
       <circle cx="470" cy="90" r="20" fill="var(--primary)" />
       <path d="M 461 90 L 468 98 L 481 82" stroke="var(--background)" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="470" y="130" textAnchor="middle" className="font-mono" fontWeight="700" fontSize="14" fill="var(--foreground)">
+      <text x="470" y="64" textAnchor="middle" className="font-mono" fontWeight="700" fontSize="14" fill="var(--foreground)">
         AddItem()
       </text>
 
