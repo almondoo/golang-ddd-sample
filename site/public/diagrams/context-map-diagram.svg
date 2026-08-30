@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 480" role="img" aria-labelledby="cm-title" font-family="system-ui, -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif">
+      <title id="cm-title">中央のorder(application層)から、customer・cart・catalog・inventory・couponへ実線の矢印が伸び、shippingへは薄い破線の矢印が伸びる図。右上の吹き出しでACL/OHSのような標準パターンではなく直接呼び出しであることを説明している</title>
+      <defs>
+        <marker id="cm-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#0d9488" />
+        </marker>
+        <marker id="cm-arrow-sub" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#4b6b68" />
+        </marker>
+      </defs>
+
+      <rect x="10" y="10" width="680" height="460" rx="28" fill="#e8f1f4" />
+
+      <!-- secondary: shipping(ShipOrder、薄い破線) -->
+      <line x1="245" y1="215" x2="185" y2="165" stroke="#4b6b68" stroke-width="3" stroke-dasharray="6 5" marker-end="url(#cm-arrow-sub)" />
+      <rect x="45" y="127" width="110" height="46" rx="14" fill="#ffffff" stroke="#4b6b68" stroke-width="2" stroke-dasharray="5 4" />
+      <text x="100" y="155" text-anchor="middle" font-weight="700" font-size="13" fill="#4b6b68" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">shipping</text>
+      <text x="100" y="115" text-anchor="middle" font-size="10.5" fill="#4b6b68">ShipOrderのみ</text>
+
+      <!-- primary: 5コンテキストへの実線 -->
+      <g>
+        <line x1="280" y1="198" x2="280" y2="101" stroke="#0d9488" stroke-width="3.5" marker-end="url(#cm-arrow)" />
+        <rect x="225" y="47" width="110" height="46" rx="14" fill="#ffffff" stroke="#0d9488" stroke-width="2.5" />
+        <text x="280" y="68" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">customer</text>
+        <text x="280" y="84" text-anchor="middle" font-size="10" fill="#4b6b68">実在確認</text>
+      </g>
+      <g>
+        <line x1="342.61" y1="221.22" x2="406.84" y2="176.58" stroke="#0d9488" stroke-width="3.5" marker-end="url(#cm-arrow)" />
+        <rect x="405" y="127" width="110" height="46" rx="14" fill="#ffffff" stroke="#0d9488" stroke-width="2.5" />
+        <text x="460" y="148" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">cart</text>
+        <text x="460" y="164" text-anchor="middle" font-size="10" fill="#4b6b68">カート読書</text>
+      </g>
+      <g>
+        <line x1="342.61" y1="258.78" x2="406.84" y2="303.42" stroke="#0d9488" stroke-width="3.5" marker-end="url(#cm-arrow)" />
+        <rect x="405" y="307" width="110" height="46" rx="14" fill="#ffffff" stroke="#0d9488" stroke-width="2.5" />
+        <text x="460" y="328" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">catalog</text>
+        <text x="460" y="344" text-anchor="middle" font-size="10" fill="#4b6b68">価格取得</text>
+      </g>
+      <g>
+        <line x1="280" y1="282" x2="280" y2="379" stroke="#0d9488" stroke-width="3.5" marker-end="url(#cm-arrow)" />
+        <rect x="225" y="387" width="110" height="46" rx="14" fill="#ffffff" stroke="#0d9488" stroke-width="2.5" />
+        <text x="280" y="408" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">inventory</text>
+        <text x="280" y="424" text-anchor="middle" font-size="10" fill="#4b6b68">在庫引当</text>
+      </g>
+      <g>
+        <line x1="217.39" y1="258.78" x2="153.16" y2="303.42" stroke="#0d9488" stroke-width="3.5" marker-end="url(#cm-arrow)" />
+        <rect x="45" y="307" width="110" height="46" rx="14" fill="#ffffff" stroke="#0d9488" stroke-width="2.5" />
+        <text x="100" y="328" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">coupon</text>
+        <text x="100" y="344" text-anchor="middle" font-size="10" fill="#4b6b68">クーポン消費</text>
+      </g>
+
+      <!-- 中央: order(application層) -->
+      <rect x="215" y="207" width="130" height="66" rx="20" fill="#0d9488" />
+      <text x="280" y="234" text-anchor="middle" font-weight="800" font-size="15" fill="#ffffff" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">order</text>
+      <text x="280" y="253" text-anchor="middle" font-size="10.5" fill="#ffffff" opacity="0.9">application層</text>
+
+      <!-- 右上: ACL/OHSではなく直接呼び出しである旨の吹き出し -->
+      <rect x="530" y="30" width="150" height="92" rx="16" fill="#ffffff" stroke="#d97706" stroke-width="2.5" stroke-dasharray="6 5" />
+      <text x="605" y="56" text-anchor="middle" font-weight="700" font-size="11.5" fill="#d97706">Customer-Supplier</text>
+      <text x="605" y="72" text-anchor="middle" font-weight="700" font-size="11.5" fill="#d97706">ACL・OHSではない</text>
+      <text x="605" y="93" text-anchor="middle" font-size="10.5" fill="#134e4a">ただの直接呼び出し</text>
+      <text x="605" y="109" text-anchor="middle" font-size="10.5" fill="#134e4a">(正直な trade-off)</text>
+    </svg>

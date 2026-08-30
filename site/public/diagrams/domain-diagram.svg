@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 400" role="img" aria-labelledby="domain-title" font-family="system-ui, -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif">
+      <title id="domain-title">商品・カート・注文・配送のミニ情景を抱えるEC業務の世界が、矢印を通ってinternal/domain/配下のコンテキストのコード箱へ写し取られる図</title>
+      <defs>
+        <marker id="domain-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#134e4a" />
+        </marker>
+      </defs>
+
+      <!-- 左: 業務の世界(EC) -->
+      <circle cx="171" cy="171" r="150" fill="#2dd4bf" opacity="0.35" />
+      <circle cx="171" cy="171" r="150" fill="none" stroke="#0d9488" stroke-width="3" />
+      <text x="171" y="45" text-anchor="middle" font-weight="800" font-size="16" fill="#134e4a">業務の世界(EC)</text>
+
+      <g>
+        <rect x="74" y="84" width="88" height="68" rx="16" fill="#d97706" />
+        <text x="118" y="124" text-anchor="middle" font-weight="800" font-size="15" fill="#f0fdfa">商品</text>
+      </g>
+      <g>
+        <rect x="180" y="84" width="88" height="68" rx="16" fill="#2dd4bf" />
+        <text x="224" y="124" text-anchor="middle" font-weight="800" font-size="15" fill="#f0fdfa">カート</text>
+      </g>
+      <g>
+        <rect x="74" y="190" width="88" height="68" rx="16" fill="#0d9488" />
+        <text x="118" y="230" text-anchor="middle" font-weight="800" font-size="15" fill="#f0fdfa">注文</text>
+      </g>
+      <g>
+        <rect x="180" y="190" width="88" height="68" rx="16" fill="#134e4a" />
+        <text x="224" y="230" text-anchor="middle" font-weight="800" font-size="15" fill="#f0fdfa">配送</text>
+      </g>
+
+      <text x="171" y="345" text-anchor="middle" font-size="13" fill="#134e4a">コードの都合ではなく、この世界を中心に据える</text>
+
+      <!-- 矢印 -->
+      <line x1="330" y1="200" x2="392" y2="200" stroke="#134e4a" stroke-width="5" stroke-linecap="round" marker-end="url(#domain-arrow)" />
+
+      <!-- 右: internal/domain/ へ写し取られたコード -->
+      <rect x="400" y="60" width="200" height="280" rx="20" fill="#134e4a" />
+      <text x="500" y="90" text-anchor="middle" font-weight="800" font-size="13" fill="#f0fdfa" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">internal/domain/</text>
+      <rect x="416" y="105" width="168" height="25" rx="8" fill="#ffffff" opacity="0.92" />
+      <rect x="416" y="138" width="168" height="25" rx="8" fill="#ffffff" opacity="0.92" />
+      <rect x="416" y="171" width="168" height="25" rx="8" fill="#ffffff" opacity="0.92" />
+      <rect x="416" y="204" width="168" height="25" rx="8" fill="#ffffff" opacity="0.92" />
+      <rect x="416" y="237" width="168" height="25" rx="8" fill="#ffffff" opacity="0.92" />
+      <rect x="416" y="270" width="168" height="25" rx="8" fill="#ffffff" opacity="0.92" />
+      <rect x="416" y="303" width="168" height="25" rx="8" fill="#ffffff" opacity="0.92" />
+      <text x="500" y="122" text-anchor="middle" font-size="12" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">catalog</text>
+      <text x="500" y="155" text-anchor="middle" font-size="12" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">cart</text>
+      <text x="500" y="188" text-anchor="middle" font-size="12" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">order</text>
+      <text x="500" y="221" text-anchor="middle" font-size="12" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">customer</text>
+      <text x="500" y="254" text-anchor="middle" font-size="12" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">inventory</text>
+      <text x="500" y="287" text-anchor="middle" font-size="12" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">shipping</text>
+      <text x="500" y="320" text-anchor="middle" font-size="12" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">coupon</text>
+    </svg>

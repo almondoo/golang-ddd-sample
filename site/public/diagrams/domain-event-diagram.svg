@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 440" role="img" aria-labelledby="de-title" font-family="system-ui, -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif">
+      <title id="de-title">以前はイベントバス経由でCartハンドラが購読していたが、現在は学習コストを下げるためPlaceOrderUseCaseがorderRepoとcartRepoを直接呼び出す、という変遷を示す図</title>
+      <defs>
+        <marker id="de-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#4b6b68" />
+        </marker>
+        <marker id="de-arrow-live" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#0d9488" />
+        </marker>
+      </defs>
+
+      <!-- 以前(不採用) -->
+      <text x="300" y="20" text-anchor="middle" font-weight="800" font-size="14" fill="#4b6b68">以前(不採用): イベントバス経由</text>
+      <g opacity="0.55">
+        <rect x="20" y="35" width="150" height="55" rx="14" fill="#e8f1f4" stroke="#4b6b68" stroke-width="2" />
+        <text x="95" y="67" text-anchor="middle" font-size="12" font-weight="700" fill="#4b6b68">PlaceOrderUseCase</text>
+
+        <line x1="170" y1="62" x2="220" y2="62" stroke="#4b6b68" stroke-width="3" marker-end="url(#de-arrow)" />
+        <rect x="225" y="35" width="140" height="55" rx="14" fill="#e8f1f4" stroke="#4b6b68" stroke-width="2" />
+        <text x="295" y="58" text-anchor="middle" font-size="12" font-weight="700" fill="#4b6b68">イベントバス</text>
+        <text x="295" y="74" text-anchor="middle" font-size="10" fill="#4b6b68">Publish(OrderPlaced)</text>
+
+        <line x1="365" y1="62" x2="415" y2="62" stroke="#4b6b68" stroke-width="3" marker-end="url(#de-arrow)" />
+        <rect x="420" y="35" width="160" height="55" rx="14" fill="#e8f1f4" stroke="#4b6b68" stroke-width="2" />
+        <text x="500" y="58" text-anchor="middle" font-size="12" font-weight="700" fill="#4b6b68">Cartハンドラ</text>
+        <text x="500" y="74" text-anchor="middle" font-size="10" fill="#4b6b68">購読 → cart.Clear()</text>
+      </g>
+      <!-- 禁止アイコン -->
+      <circle cx="580" cy="20" r="14" fill="none" stroke="#4b6b68" stroke-width="3" />
+      <line x1="570" y1="10" x2="590" y2="30" stroke="#4b6b68" stroke-width="3" stroke-linecap="round" />
+
+      <!-- 変更の矢印 -->
+      <line x1="300" y1="105" x2="300" y2="175" stroke="#134e4a" stroke-width="4" marker-end="url(#de-arrow-live)" />
+      <text x="315" y="130" font-size="12" font-weight="700" fill="#134e4a">学習コストを下げるため</text>
+      <text x="315" y="147" font-size="12" font-weight="700" fill="#134e4a">直接呼び出しに変更</text>
+
+      <!-- 現在 -->
+      <text x="300" y="205" text-anchor="middle" font-weight="800" font-size="14" fill="#134e4a">現在: 直接呼び出し</text>
+      <rect x="180" y="220" width="240" height="55" rx="14" fill="#0d9488" />
+      <text x="300" y="253" text-anchor="middle" font-weight="800" font-size="13" fill="#ffffff">PlaceOrderUseCase</text>
+
+      <line x1="230" y1="275" x2="132" y2="329" stroke="#0d9488" stroke-width="4" marker-end="url(#de-arrow-live)" />
+      <line x1="370" y1="275" x2="468" y2="329" stroke="#0d9488" stroke-width="4" marker-end="url(#de-arrow-live)" />
+
+      <rect x="30" y="335" width="180" height="55" rx="14" fill="#ffffff" stroke="#0d9488" stroke-width="2.5" />
+      <text x="120" y="368" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">orderRepo.Save</text>
+
+      <rect x="390" y="335" width="180" height="55" rx="14" fill="#ffffff" stroke="#0d9488" stroke-width="2.5" />
+      <text x="480" y="368" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">cartRepo.Save</text>
+
+      <text x="300" y="425" text-anchor="middle" font-size="12" fill="#4b6b68">同一トランザクション内、order→cartを直接import</text>
+    </svg>

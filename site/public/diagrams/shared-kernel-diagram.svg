@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 440" role="img" aria-labelledby="sk-title" font-family="system-ui, -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif">
+      <title id="sk-title">7つのコンテキストが、中央のshared(共有カーネル)を一方向に参照している図。矢印はすべて内向きで、逆方向は存在しない</title>
+      <defs>
+        <marker id="sk-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#0d9488" />
+        </marker>
+      </defs>
+
+      <rect x="10" y="10" width="540" height="420" rx="28" fill="#e8f1f4" />
+
+      <g>
+        <line x1="280" y1="87" x2="280" y2="155" stroke="#0d9488" stroke-width="4" stroke-linecap="round" marker-end="url(#sk-arrow)" />
+        <rect x="232" y="45" width="96" height="40" rx="14" fill="#ffffff" stroke="#5eead4" stroke-width="2" />
+        <text x="280" y="70" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">catalog</text>
+      </g>
+      <g>
+        <line x1="392" y1="141" x2="356" y2="170" stroke="#0d9488" stroke-width="4" stroke-linecap="round" marker-end="url(#sk-arrow)" />
+        <rect x="361" y="107" width="96" height="40" rx="14" fill="#ffffff" stroke="#5eead4" stroke-width="2" />
+        <text x="409" y="132" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">cart</text>
+      </g>
+      <g>
+        <line x1="420" y1="262" x2="375" y2="252" stroke="#0d9488" stroke-width="4" stroke-linecap="round" marker-end="url(#sk-arrow)" />
+        <rect x="393" y="247" width="96" height="40" rx="14" fill="#ffffff" stroke="#5eead4" stroke-width="2" />
+        <text x="441" y="272" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">order</text>
+      </g>
+      <g>
+        <line x1="342" y1="359" x2="313" y2="298" stroke="#0d9488" stroke-width="4" stroke-linecap="round" marker-end="url(#sk-arrow)" />
+        <rect x="304" y="359" width="96" height="40" rx="14" fill="#ffffff" stroke="#5eead4" stroke-width="2" />
+        <text x="352" y="384" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">customer</text>
+      </g>
+      <g>
+        <line x1="218" y1="359" x2="248" y2="298" stroke="#0d9488" stroke-width="4" stroke-linecap="round" marker-end="url(#sk-arrow)" />
+        <rect x="160" y="359" width="96" height="40" rx="14" fill="#ffffff" stroke="#5eead4" stroke-width="2" />
+        <text x="208" y="384" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">inventory</text>
+      </g>
+      <g>
+        <line x1="141" y1="262" x2="185" y2="252" stroke="#0d9488" stroke-width="4" stroke-linecap="round" marker-end="url(#sk-arrow)" />
+        <rect x="71" y="247" width="96" height="40" rx="14" fill="#ffffff" stroke="#5eead4" stroke-width="2" />
+        <text x="119" y="272" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">shipping</text>
+      </g>
+      <g>
+        <line x1="168" y1="141" x2="204" y2="170" stroke="#0d9488" stroke-width="4" stroke-linecap="round" marker-end="url(#sk-arrow)" />
+        <rect x="103" y="107" width="96" height="40" rx="14" fill="#ffffff" stroke="#5eead4" stroke-width="2" />
+        <text x="151" y="132" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">coupon</text>
+      </g>
+
+      <!-- 中央: shared(共有カーネル) -->
+      <rect x="195" y="175" width="170" height="110" rx="24" fill="#d97706" />
+      <text x="280" y="205" text-anchor="middle" font-weight="800" font-size="18" fill="#ffffff" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">shared</text>
+      <text x="280" y="228" text-anchor="middle" font-size="12" fill="#ffffff" opacity="0.9" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">Money</text>
+      <text x="280" y="246" text-anchor="middle" font-size="12" fill="#ffffff" opacity="0.9" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">ErrNotFound</text>
+      <text x="280" y="264" text-anchor="middle" font-size="12" fill="#ffffff" opacity="0.9" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">ErrConflict</text>
+
+      <text x="280" y="420" text-anchor="middle" font-size="14" fill="#134e4a">矢印はいつも内向き。sharedは誰にも依存しない</text>
+    </svg>

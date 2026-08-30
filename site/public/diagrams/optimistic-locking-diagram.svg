@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 440" role="img" aria-labelledby="ol-title" font-family="system-ui, -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif">
+      <title id="ol-title">トランザクションAとBが同じStock(version=1)を同時に読み込み、先にUPDATEしたAはversion=2で成功、後発のBはWHERE version=1に一致する行がなく shared.ErrConflict になることを示す図</title>
+      <defs>
+        <marker id="ol-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#5eead4" />
+        </marker>
+      </defs>
+
+      <!-- 版数札つきの荷物(Stock) -->
+      <rect x="210" y="25" width="140" height="85" rx="18" fill="#0d9488" />
+      <text x="280" y="60" text-anchor="middle" font-weight="800" font-size="16" fill="#ffffff">Stock</text>
+      <text x="280" y="82" text-anchor="middle" font-size="11" fill="#ffffff" opacity="0.9" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">quantity=10</text>
+      <circle cx="335" cy="30" r="20" fill="#d97706" />
+      <text x="335" y="35" text-anchor="middle" font-weight="800" font-size="13" fill="#ffffff">v1</text>
+
+      <!-- トランザクションA・B(人物) -->
+      <g transform="translate(90,190)">
+        <circle cx="0" cy="0" r="24" fill="#2dd4bf" />
+        <circle cx="-7" cy="-3" r="3" fill="#134e4a" />
+        <circle cx="7" cy="-3" r="3" fill="#134e4a" />
+        <path d="M -8 8 Q 0 15 8 8" stroke="#134e4a" stroke-width="2.5" fill="none" stroke-linecap="round" />
+      </g>
+      <text x="90" y="240" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a">トランザクションA</text>
+
+      <g transform="translate(470,190)">
+        <circle cx="0" cy="0" r="24" fill="#d97706" />
+        <circle cx="-7" cy="-3" r="3" fill="#134e4a" />
+        <circle cx="7" cy="-3" r="3" fill="#134e4a" />
+        <path d="M -8 8 Q 0 15 8 8" stroke="#134e4a" stroke-width="2.5" fill="none" stroke-linecap="round" />
+      </g>
+      <text x="470" y="240" text-anchor="middle" font-weight="700" font-size="13" fill="#134e4a">トランザクションB</text>
+
+      <!-- 両方が version=1 を読む -->
+      <line x1="105" y1="170" x2="230" y2="115" stroke="#5eead4" stroke-width="3" stroke-dasharray="6 5" marker-end="url(#ol-arrow)" />
+      <line x1="455" y1="170" x2="330" y2="115" stroke="#5eead4" stroke-width="3" stroke-dasharray="6 5" marker-end="url(#ol-arrow)" />
+      <text x="280" y="150" text-anchor="middle" font-size="12" fill="#4b6b68">両方とも version=1 を読む</text>
+
+      <!-- 結果 -->
+      <line x1="105" y1="252" x2="105" y2="299" stroke="#0d9488" stroke-width="4" marker-end="url(#ol-arrow)" />
+      <line x1="470" y1="252" x2="470" y2="299" stroke="#dc2626" stroke-width="4" marker-end="url(#ol-arrow)" />
+
+      <rect x="15" y="305" width="185" height="90" rx="18" fill="#ffffff" stroke="#0d9488" stroke-width="3" />
+      <path d="M 45 350 L 60 365 L 90 330" stroke="#0d9488" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="145" y="345" text-anchor="middle" font-weight="700" font-size="11" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">UPDATE ...</text>
+      <text x="145" y="360" text-anchor="middle" font-weight="700" font-size="11" fill="#134e4a" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">version=2</text>
+      <text x="145" y="380" text-anchor="middle" font-weight="800" font-size="12" fill="#0d9488">成功</text>
+
+      <rect x="360" y="305" width="185" height="90" rx="18" fill="#e8f1f4" stroke="#dc2626" stroke-width="3" stroke-dasharray="7 6" />
+      <circle cx="390" cy="345" r="14" fill="none" stroke="#dc2626" stroke-width="3.5" />
+      <line x1="381" y1="336" x2="399" y2="354" stroke="#dc2626" stroke-width="3.5" stroke-linecap="round" />
+      <text x="475" y="340" text-anchor="middle" font-size="11" fill="#134e4a">WHERE version=1</text>
+      <text x="475" y="356" text-anchor="middle" font-size="11" fill="#134e4a">一致する行なし</text>
+      <text x="475" y="378" text-anchor="middle" font-weight="800" font-size="11" fill="#dc2626" font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace">shared.ErrConflict</text>
+
+      <text x="280" y="425" text-anchor="middle" font-size="12" fill="#4b6b68">版数が合わない=誰かが先に書き換えた、というサイン</text>
+    </svg>
